@@ -25,15 +25,12 @@ public class Lexer {
         //sprawdzanie czy jest znakiem specjalnym
         if(currentCharacter == '[')
         {
-            while(isWhiteSpace(currentCharacter))
-                readCharacter();
+            readCharacter();
 
             if(isDigit(currentCharacter))
                 nextToken = buildNumberToken();
             else
                 nextToken = buildStringToken();
-
-
         }
         else if(currentCharacter == ']')
             throw new Exception();
@@ -96,7 +93,7 @@ public class Lexer {
         StringBuilder string = new StringBuilder();
         while (isStringCharacter(currentCharacter))
         {
-            string.append(currentCharacter);
+            string.append((char) currentCharacter);
             readCharacter();
         }
 
