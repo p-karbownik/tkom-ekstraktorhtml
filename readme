@@ -1,4 +1,4 @@
-Do uruchomienia testów i klasy main należy wykorzystać mavena.
+Uruchomienie testów oraz kodu klasy Main wymaga użycia maven .
 
 Aby uruchomić testy:
     mvn test
