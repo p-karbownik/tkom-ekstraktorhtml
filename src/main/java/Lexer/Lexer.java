@@ -5,68 +5,112 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Lexer {
+    private final static int startRow = 0;
+    private final static int startColumn = 1;
 
-    private BufferedReader inputReader;
+    private final BufferedReader inputReader;
     private int currentCharacter;
     private HashMap<String, TokenType> keyWords;
+    private final Position inputReaderPosition;
 
     public Lexer(BufferedReader inputReader) throws IOException {
         this.inputReader = inputReader;
         initialiseKeyWords();
+        inputReaderPosition = new Position(startRow,startColumn);
         readCharacter();
     }
 
     public Token getNextToken() throws Exception {
         Token nextToken = null;
-
+        boolean readNextCharacter = true;
         while (isWhiteSpace(currentCharacter))
             readCharacter();
 
-        //sprawdzanie czy jest znakiem specjalnym
+        if(currentCharacter == -1)
+            throw new Exception();
+
         if(currentCharacter == '[')
         {
             readCharacter();
-
-            if(isDigit(currentCharacter))
-                nextToken = buildNumberToken();
-            else
-                nextToken = buildStringToken();
+            nextToken = buildStringOrNumberToken();
         }
         else if(currentCharacter == ']')
-            throw new Exception();
+            throw new Exception(); // <--- ten znak nie powinien się pojawić w innym kontekście, niż opakowanie stringa
         else if(currentCharacter == '{')
-            nextToken = new Token(TokenType.LEFT_BRACE);
+            nextToken = new Token(TokenType.LEFT_BRACE, inputReaderPosition);
         else if(currentCharacter == '}')
-            nextToken = new Token(TokenType.RIGHT_BRACE);
+            nextToken = new Token(TokenType.RIGHT_BRACE, inputReaderPosition);
+        else if (currentCharacter == '.')
+            nextToken = new Token(TokenType.DOT, inputReaderPosition);
+        else if(currentCharacter == '=')
+        {
+            Position tokenBeginPosition = (Position) inputReaderPosition.clone();
+            readCharacter();
 
+            if(currentCharacter == '=')
+                nextToken = new Token(TokenType.EQUAL, tokenBeginPosition);
+
+            else {
+                nextToken = new Token(TokenType.ASSIGN_OPERATOR, tokenBeginPosition);
+                readNextCharacter = false;
+            }
+        }
+        else if(currentCharacter == '!')
+        {
+            Position tokenBeginPosition = (Position) inputReaderPosition.clone();
+            readCharacter();
+            readNextCharacter = false;
+            if(currentCharacter == '=')
+                nextToken = new Token(TokenType.NOT_EQUAL, tokenBeginPosition);
+            else
+                throw new Exception();
+        }
+        else if(currentCharacter == ';')
+            nextToken = new Token(TokenType.SEMI_COLON, inputReaderPosition);
+        else if(currentCharacter == '(')
+            nextToken = new Token(TokenType.LEFT_ROUND_BRACKET, inputReaderPosition);
+        else if (currentCharacter == ')')
+            nextToken = new Token(TokenType.RIGHT_ROUND_BRACKET, inputReaderPosition);
         //skoro nie jest znakiem specjalnym, to moze być słowem kluczowym
         if(nextToken == null)
+        {
             nextToken = buildKeyWordToken();
+            readNextCharacter = false;
+        }
 
-        readCharacter();
+        if(readNextCharacter)
+            readCharacter();
 
         return nextToken;
     }
 
     private void readCharacter() throws IOException {
+        if(currentCharacter == '\n')
+        {
+            inputReaderPosition.setNextRow();
+            inputReaderPosition.setColumn(startColumn);
+        }
+        else
+            inputReaderPosition.setNextColumn();
+
         currentCharacter = inputReader.read();
     }
 
     private Token buildKeyWordToken() throws Exception {
         StringBuilder keyWord = new StringBuilder();
+        Position tokenBeginPosition = (Position) inputReaderPosition.clone();
 
-        while (!isWhiteSpace(currentCharacter))
+        while (!isWhiteSpace(currentCharacter) && currentCharacter != -1 && !isOperatorCharacter(currentCharacter))
         {
-            keyWord.append(currentCharacter);
+            keyWord.append((char)currentCharacter);
             readCharacter();
         }
-
         //zlapalismy slowo
         //teraz czas sprawdzic, czy ono rzeczywiscie istnieje
 
         if(keyWords.containsKey(keyWord.toString()))
         {
-            return new Token(keyWords.get(keyWord.toString()));
+            return new Token(keyWords.get(keyWord.toString()), tokenBeginPosition);
         }
 
         //wyrzuc wyjatek
@@ -74,33 +118,36 @@ public class Lexer {
         throw new Exception();
     }
 
-    private Token buildNumberToken() throws Exception {
-        StringBuilder number = new StringBuilder();
+    private Token buildStringOrNumberToken() throws Exception {
+        StringBuilder content = new StringBuilder();
+        Position tokenBeginPosition = (Position) inputReaderPosition.clone();
+        boolean isString = false;
+        boolean isThatFirstCharacter = true;
 
-        while (isDigit(currentCharacter))
+        while (isStringCharacter(currentCharacter))
         {
-            number.append(currentCharacter);
+            if(!isDigit(currentCharacter))
+                isString = true;
+
+            if(isThatFirstCharacter)
+            {
+                isThatFirstCharacter = false;
+                if (currentCharacter == '0')
+                    isString = true;
+            }
+
+            content.append((char) currentCharacter);
             readCharacter();
         }
 
         if(!isWhiteSpace(currentCharacter) && currentCharacter != ']')
             throw new Exception();
 
-        return new Token(TokenType.NUMBER, number.toString());
-    }
+        if(isString)
+            return new Token(TokenType.STRING, content.toString(), tokenBeginPosition);
+        else
+            return new Token(TokenType.NUMBER, content.toString(), tokenBeginPosition);
 
-    private Token buildStringToken() throws Exception {
-        StringBuilder string = new StringBuilder();
-        while (isStringCharacter(currentCharacter))
-        {
-            string.append((char) currentCharacter);
-            readCharacter();
-        }
-
-        if(currentCharacter != ']')
-            throw new Exception();
-
-        return new Token(TokenType.STRING, string.toString());
     }
 
     private boolean isWhiteSpace(int character)
@@ -111,7 +158,7 @@ public class Lexer {
 
     private void initialiseKeyWords()
     {
-        keyWords = new HashMap<String, TokenType>();
+        keyWords = new HashMap<>();
 
         keyWords.put("resource", TokenType.RESOURCE);
         keyWords.put("tag", TokenType.TAG);
@@ -138,12 +185,6 @@ public class Lexer {
 
         keyWords.put("no", TokenType.NO);
         keyWords.put("field", TokenType.FIELD);
-
-        keyWords.put("==", TokenType.EQUAL);
-        keyWords.put("!=", TokenType.NOT_EQUAL);
-        keyWords.put("=", TokenType.ASSIGN_OPERATOR);
-        keyWords.put(".", TokenType.DOT);
-        keyWords.put(";", TokenType.SEMI_COLON);
     }
 
     private boolean isDigit(int character)
@@ -156,6 +197,12 @@ public class Lexer {
         return ('A' <= character && character <= 'Z') ||
                 ('a' <= character && character <= 'z')
                 || character == ' ' || character == '$' || character == '_'
-                || character == '.';
+                || character == '.' || character == '-' || isDigit(character);
+    }
+
+    private boolean isOperatorCharacter(int character)
+    {
+        return character == '=' || character == '!' || character == '.' || character == '[' || character == ']' || character == ';'
+                || character == '(' || character == ')';
     }
 }
