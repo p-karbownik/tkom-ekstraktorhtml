@@ -27,8 +27,7 @@ public class Position implements Cloneable{
         return "Position: row = " + row + ", column = " + column;
     }
 
-    public Object clone() throws CloneNotSupportedException
-    {
+    public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 }

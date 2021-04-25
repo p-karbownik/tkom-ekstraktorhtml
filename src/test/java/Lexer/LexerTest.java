@@ -1,6 +1,5 @@
 package Lexer;
 
-import com.sun.source.tree.NewArrayTree;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -341,7 +340,8 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE)
+                        new Token(TokenType.RIGHT_BRACE),
+                        new Token(TokenType.EOF)
                 };
         
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -440,7 +440,8 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE)
+                        new Token(TokenType.RIGHT_BRACE),
+                        new Token(TokenType.EOF)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -554,7 +555,8 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE)
+                        new Token(TokenType.RIGHT_BRACE),
+                        new Token(TokenType.EOF)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));

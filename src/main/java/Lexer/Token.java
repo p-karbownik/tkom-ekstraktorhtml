@@ -46,6 +46,7 @@ public class Token {
     {
         return position;
     }
+
     @Override
     public boolean equals(Object object)
     {
@@ -55,6 +56,5 @@ public class Token {
 
         return type == token.type && content.compareTo(token.content) == 0;
     }
-
 
 }

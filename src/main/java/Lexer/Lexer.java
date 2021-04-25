@@ -1,5 +1,8 @@
 package Lexer;
 
+import Exceptions.UnrecognisedTokenException;
+import Exceptions.WrongTokenException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,7 +30,7 @@ public class Lexer {
             readCharacter();
 
         if(currentCharacter == -1)
-            throw new Exception();
+            return new Token(TokenType.EOF);
 
         if(currentCharacter == '[')
         {
@@ -35,7 +38,7 @@ public class Lexer {
             nextToken = buildStringOrNumberToken();
         }
         else if(currentCharacter == ']')
-            throw new Exception(); // <--- ten znak nie powinien się pojawić w innym kontekście, niż opakowanie stringa
+            throw new WrongTokenException(inputReaderPosition); // <--- ten znak nie powinien się pojawić w innym kontekście, niż opakowanie stringa
         else if(currentCharacter == '{')
             nextToken = new Token(TokenType.LEFT_BRACE, inputReaderPosition);
         else if(currentCharacter == '}')
@@ -63,7 +66,7 @@ public class Lexer {
             if(currentCharacter == '=')
                 nextToken = new Token(TokenType.NOT_EQUAL, tokenBeginPosition);
             else
-                throw new Exception();
+                throw new UnrecognisedTokenException(tokenBeginPosition);
         }
         else if(currentCharacter == ';')
             nextToken = new Token(TokenType.SEMI_COLON, inputReaderPosition);
@@ -96,9 +99,15 @@ public class Lexer {
         currentCharacter = inputReader.read();
     }
 
-    private Token buildKeyWordToken() throws Exception {
+    private Token buildKeyWordToken() throws UnrecognisedTokenException, IOException {
         StringBuilder keyWord = new StringBuilder();
-        Position tokenBeginPosition = (Position) inputReaderPosition.clone();
+        Position tokenBeginPosition = null;
+
+        try {
+            tokenBeginPosition = (Position) inputReaderPosition.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
 
         while (!isWhiteSpace(currentCharacter) && currentCharacter != -1 && !isOperatorCharacter(currentCharacter))
         {
@@ -115,7 +124,7 @@ public class Lexer {
 
         //wyrzuc wyjatek
 
-        throw new Exception();
+        throw new UnrecognisedTokenException(tokenBeginPosition);
     }
 
     private Token buildStringOrNumberToken() throws Exception {
@@ -141,7 +150,7 @@ public class Lexer {
         }
 
         if(!isWhiteSpace(currentCharacter) && currentCharacter != ']')
-            throw new Exception();
+            throw new UnrecognisedTokenException(tokenBeginPosition);
 
         if(isString)
             return new Token(TokenType.STRING, content.toString(), tokenBeginPosition);

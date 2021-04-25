@@ -34,5 +34,6 @@ public enum TokenType {
     DOT, // .
     SEMI_COLON, // ;
     NUMBER, // 1234567890
-    STRING // String
+    STRING, // String
+    EOF
 }
