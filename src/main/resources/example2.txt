@@ -14,5 +14,6 @@ resource
 		field[link_to_image] = from this.attribute[src].text;
 		field[description] = from this.attribute[alt].text;
 	}
+
 	amount = every;
 }

@@ -26,11 +26,12 @@ public class Lexer {
     public Token getNextToken() throws Exception {
         Token nextToken = null;
         boolean readNextCharacter = true;
+
         while (isWhiteSpace(currentCharacter))
             readCharacter();
 
         if(currentCharacter == -1)
-            return new Token(TokenType.EOF);
+            return new Token(TokenType.EOF, inputReaderPosition);
 
         if(currentCharacter == '[')
         {
