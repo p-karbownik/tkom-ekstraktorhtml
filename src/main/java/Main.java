@@ -6,6 +6,12 @@ import java.io.*;
 public class Main {
     public static void main(String args[]) {
         //wczytaj zadany plik
+        if(args.length == 0)
+        {
+            System.out.println("Brak sciezki pliku wejsciowego");
+            return;
+        }
+
         File file = new File(args[0]);
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
