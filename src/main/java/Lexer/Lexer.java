@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Lexer {
-    private final static int startRow = 0;
-    private final static int startColumn = 1;
+    private final static int startRow = 1;
+    private final static int startColumn = 0;
 
     private final BufferedReader inputReader;
     private int currentCharacter;
@@ -89,7 +89,7 @@ public class Lexer {
     }
 
     private void readCharacter() throws IOException {
-        if(currentCharacter == '\n')
+        if(currentCharacter == '\n') //rozbudowac o pozostale przypadki
         {
             inputReaderPosition.setNextRow();
             inputReaderPosition.setColumn(startColumn);
@@ -110,7 +110,7 @@ public class Lexer {
             e.printStackTrace();
         }
 
-        while (!isWhiteSpace(currentCharacter) && currentCharacter != -1 && !isOperatorCharacter(currentCharacter))
+        while (!isWhiteSpace(currentCharacter) && currentCharacter != -1 && !isOperatorCharacter(currentCharacter)) //przerobic w kierunku sprawdzania, czy znaki sa ok
         {
             keyWord.append((char)currentCharacter);
             readCharacter();
@@ -125,7 +125,7 @@ public class Lexer {
 
         //wyrzuc wyjatek
 
-        throw new UnrecognisedTokenException(tokenBeginPosition);
+        throw new UnrecognisedTokenException(tokenBeginPosition); //
     }
 
     private Token buildStringOrNumberToken() throws Exception {
@@ -142,7 +142,7 @@ public class Lexer {
             if(isThatFirstCharacter)
             {
                 isThatFirstCharacter = false;
-                if (currentCharacter == '0')
+                if (currentCharacter == '0') //
                     isString = true;
             }
 
@@ -150,7 +150,7 @@ public class Lexer {
             readCharacter();
         }
 
-        if(!isWhiteSpace(currentCharacter) && currentCharacter != ']')
+        if(!isWhiteSpace(currentCharacter) && currentCharacter != ']') //
             throw new UnrecognisedTokenException(tokenBeginPosition);
 
         if(isString)
