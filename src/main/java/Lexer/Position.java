@@ -13,6 +13,11 @@ public class Position implements Cloneable{
         column++;
     }
 
+    public void increaseColumn(int value)
+    {
+        this.column += value;
+    }
+
     public void setNextRow() {
         row++;
     }
@@ -20,7 +25,6 @@ public class Position implements Cloneable{
     public void setColumn(int column) {
         this.column = column;
     }
-
 
     public String toString()
     {
