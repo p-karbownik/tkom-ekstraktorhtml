@@ -36,6 +36,7 @@ public enum TokenType {
     SEMI_COLON, // ;
     NUMBER, // 1234567890
     STRING, // String
+    IDENT,
 
     //tokens for HTML
     CLOSING_TAG,

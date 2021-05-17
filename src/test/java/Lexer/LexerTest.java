@@ -14,7 +14,7 @@ public class LexerTest {
 
     private Lexer getLexer(String s) throws IOException {
         BufferedReader br = new BufferedReader(new StringReader(s));
-        return new Lexer(br);
+        return new Lexer(new Reader(br));
     }
 
     @Test
@@ -29,7 +29,7 @@ public class LexerTest {
     @Test
     @DisplayName("Test tokena typu NUMBER")
     public void testTokenNumber() throws Exception {
-        Token token = getLexer("[12345]").getNextToken();
+        Token token = getLexer("<12345>").getNextToken();
         assertAll("string token",
                 () -> assertEquals(TokenType.NUMBER, token.getType()),
                 () -> assertEquals("12345", token.getContent()));
@@ -294,9 +294,9 @@ public class LexerTest {
                 "export to class = [Resource];\n" +
                 "set fields\n" +
                 "{\n" +
-                "field[img] = from tag[div][1].tag[img][1].attribute[src].img;\n" +
+                "field[img] = from tag[div]<1>.tag[img]<1>.attribute[src].img;\n" +
                 "}\n" +
-                "amount = every;" +
+                "amount = every;\n" +
                 "}";
         Lexer lexer = getLexer(text);
         Token[] tokens = new Token[]
@@ -340,14 +340,16 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE),
-                        new Token(TokenType.EOF)
+                        new Token(TokenType.RIGHT_BRACE)
+                        //new Token(TokenType.EOF)
                 };
         
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
         try {
-            for (Object t: tokenList)
-                assertEquals(lexer.getNextToken(), t);
+            for (Object t: tokenList) {
+                Token token = lexer.getNextToken();
+                assertEquals(token, t);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -358,7 +360,7 @@ public class LexerTest {
     public void testSecondExampleCode() throws IOException {
         File file = new File("src/main/resources/example2.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
-        Lexer lexer = new Lexer(br);
+        Lexer lexer = new Lexer(new Reader(br));
         Token[] tokens = new Token[]
                 {
                         new Token(TokenType.RESOURCE),
@@ -440,8 +442,8 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE),
-                        new Token(TokenType.EOF)
+                        new Token(TokenType.RIGHT_BRACE)
+                        //new Token(TokenType.EOF)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -458,7 +460,7 @@ public class LexerTest {
     public void testThirdExampleCode() throws IOException {
         File file = new File("src/main/resources/example3.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
-        Lexer lexer = new Lexer(br);
+        Lexer lexer = new Lexer(new Reader(br));
         Token[] tokens = new Token[]
                 {
                         new Token(TokenType.RESOURCE),
@@ -556,7 +558,7 @@ public class LexerTest {
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
                         new Token(TokenType.RIGHT_BRACE),
-                        new Token(TokenType.EOF)
+                        //new Token(TokenType.EOF)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
