@@ -9,8 +9,8 @@ resource
 	export to class = [Link];
 	set fields
 	{
-		field[link_to_image] = from tag[a][1].tag[img][1].attribute[src].text;
-		field[description] = from tag[a][1].tag[img][1].attribute[alt].text;
+		field[link_to_image] = from tag[a]<1>.tag[img]<1>.attribute[src].text;
+		field[description] = from tag[a]<1>.tag[img]<1>.attribute[alt].text;
 	}
 	amount = every;
 }

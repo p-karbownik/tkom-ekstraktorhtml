@@ -6,69 +6,91 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Lexer {
-    private final static int startRow = 1;
-    private final static int startColumn = 0;
-    private final static int tabLength = 8;
-
-    private final BufferedReader inputReader;
-    private int currentCharacter;
+    private Reader reader;
     private HashMap<String, TokenType> keyWords;
     private HashMap<String, TokenType> operators;
-    private final Position inputReaderPosition;
 
-    public Lexer(BufferedReader inputReader) throws IOException {
-        this.inputReader = inputReader;
+    public Lexer(Reader reader) throws IOException {
+        this.reader = reader;
         initialiseKeyWords();
         initialiseOperators();
-        inputReaderPosition = new Position(startRow,startColumn);
-        readCharacter();
+        reader.readCharacter();
     }
 
     public Token getNextToken() throws Exception {
         Token nextToken = buildToken();
-        readCharacter();
+        reader.readCharacter();
 
         return nextToken;
     }
 
     private Token buildToken() throws IOException, CloneNotSupportedException, UnrecognisedTokenException {
         StringBuilder content = new StringBuilder();
-        Position startPosition = (Position) inputReaderPosition.clone();
+        Position startPosition = (Position) reader.getCurrentPosition().clone();
 
-        while (isWhiteSpace(currentCharacter))
-            readCharacter();
+        while (isWhiteSpace(reader.getCurrentCharacter()))
+            reader.readCharacter();
 
-        if(currentCharacter == '[')
+        if(reader.getCurrentCharacter() == '[')
         {
-            readCharacter();
-            while (isStringCharacter(currentCharacter))
+            reader.readCharacter();
+            while (isStringCharacter(reader.getCurrentCharacter()))
             {
-                content.append((char) currentCharacter);
-                readCharacter();
+                content.append(reader.getCurrentCharacter());
+                reader.readCharacter();
             }
-            System.out.println(content);
-            if(currentCharacter != ']')
+
+            if(reader.getCurrentCharacter() != ']')
                 throw new UnrecognisedTokenException(startPosition);
 
-            if(isNumber(content.toString()))
-                return new Token(TokenType.NUMBER, content.toString(), startPosition);
-            else
-                return new Token(TokenType.STRING, content.toString(), startPosition);
+            return new Token(TokenType.STRING, content.toString(), startPosition);
+        }
+        else if(reader.getCurrentCharacter() == '<')
+        {
+            reader.readCharacter();
+            while (isStringCharacter(reader.getCurrentCharacter()))
+            {
+                content.append(reader.getCurrentCharacter());
+                reader.readCharacter();
+            }
+
+            if(reader.getCurrentCharacter() != '>')
+                throw new UnrecognisedTokenException(startPosition);
+
+            return new Token(TokenType.NUMBER, content.toString(), startPosition);
         }
         else
         {
-            if(isStringCharacter(currentCharacter)) {
-                while (isStringCharacter(currentCharacter)) {
-                    content.append((char) currentCharacter);
-                    readCharacter();
+            if(isKeyWordCharacter(reader.getCurrentCharacter())) {
+                while (isKeyWordCharacter(reader.getCurrentCharacter())) {
+                    content.append(reader.getCurrentCharacter());
+                    reader.readCharacter();
                 }
+                reader.blockNextReading();
             }
             else
             {
-                while (isOperatorCharacter(currentCharacter))
+                char character = reader.getCurrentCharacter();
+
+                if(character == '(' || character == ')' || character == '{' || character == '}'
+                || character == ';' || character == '.')
                 {
-                    content.append((char) currentCharacter);
-                    readCharacter();
+                    content.append(character);
+                }
+                else
+                {
+                    content.append(reader.getCurrentCharacter());
+                    reader.readCharacter();
+                    character = reader.getCurrentCharacter();
+
+                    if(character == '=')
+                    {
+                        content.append(character);
+                    }
+                    else
+                    {
+                        reader.blockNextReading();
+                    }
                 }
             }
 
@@ -83,7 +105,6 @@ public class Lexer {
 
     private Token buildOperatorToken(String content, Position tokenBeginPosition) {
         TokenType tokenType = operators.get(content);
-        System.out.println(content);
         if(tokenType == null)
             return null;
 
@@ -91,29 +112,9 @@ public class Lexer {
     }
 
     //TO:DO dopisać testy do tej metody
-    private void readCharacter() throws IOException {
-        if(currentCharacter == '\n') //rozbudowac o pozostale przypadki
-        {
-            inputReaderPosition.setNextRow();
-            inputReaderPosition.setColumn(startColumn);
-        }
-        else if(currentCharacter == '\t')
-        {
-            inputReaderPosition.increaseColumn(tabLength);
-        }
-        else if( currentCharacter == '\r')
-        {
-            inputReaderPosition.setColumn(startColumn);
-        }
-        else
-            inputReaderPosition.setNextColumn();
-
-        currentCharacter = inputReader.read();
-    }
 
     private Token buildKeyWordToken(String content, Position tokenBeginPosition) {
         TokenType tokenType = keyWords.get(content);
-        System.out.println(content);
         if(tokenType == null)
             return null;
 
@@ -179,7 +180,7 @@ public class Lexer {
 
     private boolean isOperatorCharacter(int character) {
         return character == '!' || character == '=' || character == ')' || character == '{' || character == ';'
-            || character == '}' || character == '(';
+            || character == '}' || character == '(' || character == '.';
     }
 
     private boolean isStringCharacter(int character)
@@ -188,6 +189,11 @@ public class Lexer {
                 ('a' <= character && character <= 'z')
                 || character == ' ' || character == '$' || character == '_'
                 || character == '.' || character == '-' || isDigit(character);
+    }
+
+    private boolean isKeyWordCharacter(int character)
+    {
+        return ('a' <= character && character <= 'z');
     }
 
     private boolean isNumber(String content)
