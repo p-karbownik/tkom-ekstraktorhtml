@@ -1,7 +1,8 @@
 package Lexer;
 
-import Exceptions.UnrecognisedTokenException;
-import java.io.BufferedReader;
+import Exceptions.LexerException;
+import Reader.*;
+
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -18,117 +19,157 @@ public class Lexer {
     }
 
     public Token getNextToken() throws Exception {
-        Token nextToken = buildToken();
-        reader.readCharacter();
+        Token nextToken = null;
 
-        return nextToken;
-    }
-
-    private Token buildToken() throws IOException, CloneNotSupportedException, UnrecognisedTokenException {
         StringBuilder content = new StringBuilder();
-        Position startPosition = (Position) reader.getCurrentPosition().clone();
+        Position startPosition = reader.getCurrentPosition();
 
         while (isWhiteSpace(reader.getCurrentCharacter()))
             reader.readCharacter();
 
-        if(reader.getCurrentCharacter() == '[')
-        {
-            reader.readCharacter();
-            while (isStringCharacter(reader.getCurrentCharacter()))
-            {
-                content.append(reader.getCurrentCharacter());
-                reader.readCharacter();
-            }
+        if (reader.getCurrentCharacter() == 0xFFFF)
+            nextToken = new Token(TokenType.EOF);
 
-            if(reader.getCurrentCharacter() != ']')
-                throw new UnrecognisedTokenException(startPosition);
+        if (nextToken == null)
+            nextToken = buildStringToken(content, startPosition);
 
-            return new Token(TokenType.STRING, content.toString(), startPosition);
-        }
-        else if(reader.getCurrentCharacter() == '<')
-        {
-            reader.readCharacter();
-            while (isStringCharacter(reader.getCurrentCharacter()))
-            {
-                content.append(reader.getCurrentCharacter());
-                reader.readCharacter();
-            }
+        if (nextToken == null)
+            nextToken = buildOperatorToken(content, startPosition);
 
-            if(reader.getCurrentCharacter() != '>')
-                throw new UnrecognisedTokenException(startPosition);
+        if (nextToken == null)
+            nextToken = buildNumberToken(content, startPosition);
 
-            return new Token(TokenType.NUMBER, content.toString(), startPosition);
-        }
-        else
-        {
-            if(isKeyWordCharacter(reader.getCurrentCharacter())) {
-                while (isKeyWordCharacter(reader.getCurrentCharacter())) {
-                    content.append(reader.getCurrentCharacter());
-                    reader.readCharacter();
-                }
-                reader.blockNextReading();
-            }
-            else
-            {
-                char character = reader.getCurrentCharacter();
+        if (nextToken == null)
+            nextToken = buildKeyWordToken(content, startPosition);
 
-                if(character == '(' || character == ')' || character == '{' || character == '}'
-                || character == ';' || character == '.')
-                {
-                    content.append(character);
-                }
-                else
-                {
-                    content.append(reader.getCurrentCharacter());
-                    reader.readCharacter();
-                    character = reader.getCurrentCharacter();
+        if (nextToken == null)
+            nextToken = buildIdentifierToken(content, startPosition);
 
-                    if(character == '=')
-                    {
-                        content.append(character);
-                    }
-                    else
-                    {
-                        reader.blockNextReading();
-                    }
-                }
-            }
+        if (nextToken == null)
+            throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn() + "with content: " + content.toString());
 
-            Token token = buildKeyWordToken(content.toString(), startPosition);
-
-            if(token == null)
-                token = buildOperatorToken(content.toString(), startPosition);
-
-            return token;
-        }
+        return nextToken;
     }
 
-    private Token buildOperatorToken(String content, Position tokenBeginPosition) {
-        TokenType tokenType = operators.get(content);
-        if(tokenType == null)
+    private Token buildStringToken(StringBuilder content, Position tokenBeginPosition) throws IOException, LexerException {
+
+        if (reader.getCurrentCharacter() != '\"')
+            return null;
+
+        reader.readCharacter();
+
+        while (isStringCharacter(reader.getCurrentCharacter())) {
+            content.append(reader.getCurrentCharacter());
+            reader.readCharacter();
+        }
+
+        if (reader.getCurrentCharacter() != '\"')
+            throw new LexerException("Cannot build string token at position: row " + tokenBeginPosition.getRow() + " column " + tokenBeginPosition.getColumn() + "with content: " + content.toString());
+
+        reader.readCharacter();
+        return new Token(TokenType.STRING, content.toString(), tokenBeginPosition);
+    }
+
+    private Token buildOperatorToken(StringBuilder content, Position tokenBeginPosition) throws IOException {
+        char character = reader.getCurrentCharacter();
+
+        if (character == '(' || character == ')' || character == '{' || character == '}'
+                || character == ';' || character == '.' || character == '[' || character == ']') {
+            content.append(character);
+            reader.readCharacter();
+        } else if (character == '!' || character == '=') {
+            content.append(reader.getCurrentCharacter());
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
+
+            if (character == '=')
+                content.append(character);
+
+        }
+
+        TokenType tokenType = operators.get(content.toString());
+
+        if (tokenType == null)
             return null;
 
         return new Token(tokenType, tokenBeginPosition);
     }
 
-    //TO:DO dopisać testy do tej metody
+    private Token buildKeyWordToken(StringBuilder content, Position tokenBeginPosition) throws IOException {
 
-    private Token buildKeyWordToken(String content, Position tokenBeginPosition) {
-        TokenType tokenType = keyWords.get(content);
-        if(tokenType == null)
+        if (!isKeyWordCharacter(reader.getCurrentCharacter()))
+            return null;
+
+        while (isKeyWordCharacter(reader.getCurrentCharacter())) {
+            content.append(reader.getCurrentCharacter());
+            reader.readCharacter();
+        }
+
+        TokenType tokenType = keyWords.get(content.toString());
+
+        if (tokenType == null)
             return null;
 
         return new Token(tokenType, tokenBeginPosition);
     }
 
-    private boolean isWhiteSpace(int character)
-    {
+    private Token buildIdentifierToken(StringBuilder content, Position position) throws IOException, LexerException {
+        char character = reader.getCurrentCharacter();
+
+        if (content.toString().isEmpty()) {
+            if (('A' <= character && character <= 'Z') || ('a' <= character && character <= 'z') ||
+                    character == '_' || character == '$' || character == '!') {
+                content.append(character);
+                reader.readCharacter();
+                character = reader.getCurrentCharacter();
+            } else
+                throw new LexerException("Cannot build identifier token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
+        }
+
+        while (('A' <= character && character <= 'Z') || ('a' <= character && character <= 'z') ||
+                character == '_' || character == '$' || character == '!' || character == '-' || ('0' <= character && character <= '9')) {
+            content.append(character);
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
+        }
+
+        if (!(character == '(' || character == ')' || character == '{' || character == '}'
+                || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 0xffff) && !isWhiteSpace(character))
+            throw new LexerException("Cannot build identifier token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
+
+        return new Token(TokenType.IDENTIFIER, content.toString(), position);
+    }
+
+    private Number buildNumberToken(StringBuilder content, Position position) throws IOException, LexerException {
+        char character = reader.getCurrentCharacter();
+
+        if (!('0' <= character && character <= '9'))
+            return null;
+
+        while (!isWhiteSpace(character) && !(character == '(' || character == ')' || character == '{' || character == '}'
+                || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 0xffff)) {
+            content.append(character);
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
+        }
+
+        int value;
+
+        try {
+            value = Integer.parseInt(content.toString());
+        } catch (NumberFormatException e) {
+            throw new LexerException("Cannot build number token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
+        }
+
+        return new Number(value, position);
+    }
+
+    private boolean isWhiteSpace(char character) {
         return character == ' ' || character == '\t'
                 || character == '\n' || character == '\r';
     }
 
-    private void initialiseKeyWords()
-    {
+    private void initialiseKeyWords() {
         keyWords = new HashMap<>();
 
         keyWords.put("resource", TokenType.RESOURCE);
@@ -137,7 +178,10 @@ public class Lexer {
         keyWords.put("if", TokenType.IF);
         keyWords.put("parent", TokenType.PARENT);
         keyWords.put("child", TokenType.CHILD);
+        keyWords.put("ancestor", TokenType.ANCESTOR);
+        keyWords.put("descendant", TokenType.DESCENDANT);
         keyWords.put("has", TokenType.HAS);
+        keyWords.put("self", TokenType.SELF);
         keyWords.put("class", TokenType.CLASS);
         keyWords.put("attribute", TokenType.ATTRIBUTE);
 
@@ -147,19 +191,16 @@ public class Lexer {
         keyWords.put("to", TokenType.TO);
         keyWords.put("set", TokenType.SET);
         keyWords.put("fields", TokenType.FIELDS);
-        keyWords.put("text", TokenType.TEXT);
-        keyWords.put("img", TokenType.IMG);
+        keyWords.put("asImg", TokenType.ASIMG);
         keyWords.put("every", TokenType.EVERY);
         keyWords.put("from", TokenType.FROM);
-        keyWords.put("this", TokenType.THIS);
         keyWords.put("amount", TokenType.AMOUNT);
 
-        keyWords.put("no", TokenType.NO);
+        keyWords.put("not", TokenType.NOT);
         keyWords.put("field", TokenType.FIELD);
     }
 
-    private void initialiseOperators()
-    {
+    private void initialiseOperators() {
         operators = new HashMap<>();
 
         operators.put("!=", TokenType.NOT_EQUAL);
@@ -171,38 +212,20 @@ public class Lexer {
         operators.put("}", TokenType.RIGHT_BRACE);
         operators.put(";", TokenType.SEMI_COLON);
         operators.put("(", TokenType.LEFT_ROUND_BRACKET);
+        operators.put("[", TokenType.LEFT_SQUARE_BRACKET);
+        operators.put("]", TokenType.RIGHT_SQUARE_BRACKET);
     }
 
-    private boolean isDigit(int character)
-    {
-        return '0' <= character && character <= '9';
-    }
-
-    private boolean isOperatorCharacter(int character) {
-        return character == '!' || character == '=' || character == ')' || character == '{' || character == ';'
-            || character == '}' || character == '(' || character == '.';
-    }
-
-    private boolean isStringCharacter(int character)
-    {
+    private boolean isStringCharacter(int character) {
         return ('A' <= character && character <= 'Z') ||
                 ('a' <= character && character <= 'z')
                 || character == ' ' || character == '$' || character == '_'
-                || character == '.' || character == '-' || isDigit(character);
+                || character == '.' || character == '-'
+                || ('0' <= character && character <= '9');
     }
 
-    private boolean isKeyWordCharacter(int character)
-    {
-        return ('a' <= character && character <= 'z');
+    private boolean isKeyWordCharacter(int character) {
+        return ('a' <= character && character <= 'z' || character == 'I');
     }
 
-    private boolean isNumber(String content)
-    {
-        for(char ch : content.toCharArray())
-        {
-            if(!isDigit(ch))
-                return false;
-        }
-        return true;
-    }
 }

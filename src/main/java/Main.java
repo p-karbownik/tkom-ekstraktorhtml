@@ -1,7 +1,7 @@
 import Lexer.Lexer;
 import Lexer.Token;
 import Lexer.TokenType;
-import Lexer.Reader;
+import Reader.Reader;
 
 import java.io.BufferedReader;
 import java.io.File;

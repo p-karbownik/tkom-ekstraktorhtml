@@ -1,5 +1,7 @@
 package Lexer;
 
+import Reader.*;
+
 public class Token {
 
     private final TokenType type;

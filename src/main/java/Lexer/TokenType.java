@@ -8,6 +8,8 @@ public enum TokenType {
     IF, // if
     PARENT, // parent
     CHILD, // child
+    DESCENDANT,
+    ANCESTOR,
     HAS, // has
     CLASS, // class
     ATTRIBUTE, // attribute
@@ -17,16 +19,16 @@ public enum TokenType {
     TO, // to
     SET, // set
     FIELDS, //fields
-    TEXT, // text
-    IMG, // img
+    ASIMG, // asImg
     EVERY, // every
     FROM, // from
-    THIS, // this
     AMOUNT, // amount
-    NO, // no
+    NOT, // not
     FIELD, // field
     LEFT_ROUND_BRACKET, // (
     RIGHT_ROUND_BRACKET, // )
+    LEFT_SQUARE_BRACKET,
+    RIGHT_SQUARE_BRACKET,
     LEFT_BRACE, // {
     RIGHT_BRACE, // }
     EQUAL, // ==
@@ -35,16 +37,19 @@ public enum TokenType {
     DOT, // .
     SEMI_COLON, // ;
     NUMBER, // 1234567890
-    STRING, // String
-    IDENT,
+    STRING, // "String"
+    IDENTIFIER,
+    SELF,
 
     //tokens for HTML
     CLOSING_TAG,
     DOCTYPE,
     EMPTY_CLOSING_TAG,
-    QUOTE,
-    TAG_CLOSING_MARK,
-    TAG_OPENER,
+    QUOTE, // "
+    TAG_CLOSING_MARK, // >
+    TAG_OPENER, // <
+    COMMENT_TAG_OPENER, // <!--
+    COMMENT_TAG_CLOSING, // -->
     HTML_TEXT,
     EOF
 }

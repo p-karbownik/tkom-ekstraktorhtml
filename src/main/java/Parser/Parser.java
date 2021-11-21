@@ -37,7 +37,7 @@ public class Parser {
     private TagSentence parseTagSentence() throws Exception {
         readToken(TokenType.TAG);
         readToken(TokenType.ASSIGN_OPERATOR);
-        readToken(TokenType.IDENT);
+        readToken(TokenType.IDENTIFIER);
 
         TagSentence tagSentence = new TagSentence(currentToken.getContent());
 
@@ -64,7 +64,7 @@ public class Parser {
     }
 
     private Condition parseConditionSentence() throws Exception {
-        readToken(TokenType.LEFT_ROUND_BRACKET, TokenType.THIS, TokenType.PARENT, TokenType.CHILD);
+        readToken(TokenType.LEFT_ROUND_BRACKET, TokenType.SELF, TokenType.PARENT, TokenType.CHILD);
 
         Condition condition;
 
@@ -111,12 +111,12 @@ public class Parser {
     }
 
     private Term parseTerm() throws Exception {
-        readToken(TokenType.TAG, TokenType.ATTRIBUTE, TokenType.CLASS, TokenType.NO);
+        readToken(TokenType.TAG, TokenType.ATTRIBUTE, TokenType.CLASS, TokenType.NOT);
 
         boolean isNegated = false;
         TokenType comparisonOperator;
 
-        if(currentToken.getType() == TokenType.NO)
+        if(currentToken.getType() == TokenType.NOT)
         {
             readToken(TokenType.TAG, TokenType.ATTRIBUTE, TokenType.CLASS);
             isNegated = true;
@@ -156,11 +156,11 @@ public class Parser {
     private PathInCondition parsePath() throws Exception {
         PathInCondition path = new PathInCondition();
 
-        readToken(TokenType.THIS, TokenType.PARENT, TokenType.CHILD);
+        readToken(TokenType.SELF, TokenType.PARENT, TokenType.CHILD);
 
-        if(currentToken.getType() == TokenType.THIS)
+        if(currentToken.getType() == TokenType.SELF)
         {
-            path.addNode(TokenType.THIS);
+            path.addNode(TokenType.SELF);
         }
         else if(currentToken.getType() == TokenType.PARENT)
         {
@@ -199,7 +199,7 @@ public class Parser {
         readToken(TokenType.TO);
         readToken(TokenType.CLASS);
         readToken(TokenType.ASSIGN_OPERATOR);
-        readToken(TokenType.IDENT);
+        readToken(TokenType.IDENTIFIER);
 
         className = new ClassName(currentToken.getContent());
 
@@ -212,7 +212,7 @@ public class Parser {
         FieldDefinition fieldDefinition = null;
         String fieldName;
 
-        readToken(TokenType.IDENT);
+        readToken(TokenType.IDENTIFIER);
 
         fieldName = currentToken.getContent();
 
@@ -259,10 +259,10 @@ public class Parser {
         PathToResource path = new PathToResource();
 
         readToken(TokenType.FROM);
-        readToken(TokenType.THIS, TokenType.TAG);
+        readToken(TokenType.SELF, TokenType.TAG);
 
         switch (currentToken.getType()) {
-            case THIS:
+            case SELF:
                 path.addNodeToPath("this", 0);
 
                 
@@ -270,7 +270,7 @@ public class Parser {
 
             case TAG:
                 while (currentToken.getType() == TokenType.TAG) {
-                    readToken(TokenType.IDENT);
+                    readToken(TokenType.IDENTIFIER);
                     String tagName = currentToken.getContent();
                     
                     readToken(TokenType.NUMBER);
@@ -279,7 +279,7 @@ public class Parser {
                     path.addNodeToPath(tagName, Integer.parseInt(tagNumber));
                     
                     readToken(TokenType.DOT);
-                    readToken(TokenType.TAG, TokenType.TEXT, TokenType.ATTRIBUTE);
+                    //readToken(TokenType.TAG, TokenType.TEXT, TokenType.ATTRIBUTE);
                 }
                 break;
         }
@@ -293,20 +293,20 @@ public class Parser {
         switch (currentToken.getType())
         {
             case ATTRIBUTE:
-                readToken(TokenType.IDENT);
+                readToken(TokenType.IDENTIFIER);
                 String attributeName = currentToken.getContent();
                 readToken(TokenType.DOT);
-                readToken(TokenType.IMG, TokenType.TEXT);
+                //readToken(TokenType.ASIMG, TokenType.TEXT);
 
-                if (currentToken.getType() == TokenType.IMG)
-                    return new FieldContent(attributeName, TokenType.IMG);
-                else if(currentToken.getType() == TokenType.TEXT)
-                    return new FieldContent(attributeName, TokenType.TEXT);
+                if (currentToken.getType() == TokenType.ASIMG)
+                    return new FieldContent(attributeName, TokenType.ASIMG);
+               // else if(currentToken.getType() == TokenType.TEXT)
+                   // return new FieldContent(attributeName, TokenType.TEXT);
                 else
                     throw new Exception("exception");
 
-            case TEXT:
-                return new FieldContent(TokenType.TEXT);
+           // case TEXT:
+              //  return new FieldContent(TokenType.TEXT);
 
             default:
                 throw new Exception("exception");
