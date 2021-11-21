@@ -391,8 +391,8 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE)
-                        //new Token(TokenType.EOF)
+                        new Token(TokenType.RIGHT_BRACE),
+                        new Token(TokenType.EOF)
                 };
         
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -513,8 +513,8 @@ public class LexerTest {
                         new Token(TokenType.ASSIGN_OPERATOR),
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
-                        new Token(TokenType.RIGHT_BRACE)
-                        //new Token(TokenType.EOF)
+                        new Token(TokenType.RIGHT_BRACE),
+                        new Token(TokenType.EOF)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -667,7 +667,7 @@ public class LexerTest {
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
                         new Token(TokenType.RIGHT_BRACE),
-                        //new Token(TokenType.EOF)
+                        new Token(TokenType.EOF)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
