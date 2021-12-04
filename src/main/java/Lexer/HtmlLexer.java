@@ -24,8 +24,8 @@ public class HtmlLexer {
         while (isWhiteSpace(reader.getCurrentCharacter()))
             reader.readCharacter();
 
-        if(reader.getCurrentCharacter() == 0xFFFF)
-            nextToken = new Token(TokenType.EOF);
+        if(reader.getCurrentCharacter() == 3)
+            nextToken = new Token(TokenType.ETX);
 
         if(nextToken == null)
             nextToken = buildKeyWordToken(content, startPosition);
@@ -43,7 +43,7 @@ public class HtmlLexer {
     private Token buildHTMLtextToken(StringBuilder content, Position position) throws IOException {
         char character = reader.getCurrentCharacter();
 
-        while(character != 0xFFFF && !isWhiteSpace(character) && !isKeyWordCharacter(character))
+        while(character != 3 && !isWhiteSpace(character) && !isKeyWordCharacter(character)) //przemyslec podejscie do namespacow
         {
             content.append(character);
             reader.readCharacter();
@@ -66,7 +66,7 @@ public class HtmlLexer {
             reader.readCharacter();
             character = reader.getCurrentCharacter();
 
-            if(character == '!' || character == '/')
+            if(character == '!' || character == '/') // rozlaczyc ten warunek na oddzielne ify, wtedy nie trzeba hashMapy na to
             {
                 content.append(character);
                 reader.readCharacter();
@@ -90,7 +90,7 @@ public class HtmlLexer {
             return new Token(keyWords.get(content.toString()), tokenBeginPosition);
         }
 
-        else if(character == '\"' || character == '=' || character == '>')
+        else if(character == '\"' || character == '=' || character == '>') //
         {
             reader.readCharacter();
             return new Token(keyWords.get(content.toString()), tokenBeginPosition);

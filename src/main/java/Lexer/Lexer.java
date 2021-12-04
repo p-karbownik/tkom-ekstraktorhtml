@@ -22,13 +22,14 @@ public class Lexer {
         Token nextToken = null;
 
         StringBuilder content = new StringBuilder();
-        Position startPosition = reader.getCurrentPosition();
-
-        while (isWhiteSpace(reader.getCurrentCharacter()))
+        //Character.isWhitespace()
+        while (isWhiteSpace(reader.getCurrentCharacter())) //skorzystac z metody w Char
             reader.readCharacter();
 
-        if (reader.getCurrentCharacter() == 0xFFFF)
-            nextToken = new Token(TokenType.EOF);
+        Position startPosition = reader.getCurrentPosition();
+
+        if (reader.getCurrentCharacter() == 3)
+            nextToken = new Token(TokenType.ETX); // EOF zmienić na ETX
 
         if (nextToken == null)
             nextToken = buildStringToken(content, startPosition);
@@ -55,10 +56,11 @@ public class Lexer {
 
         if (reader.getCurrentCharacter() != '\"')
             return null;
-
+//content mozna zrobic lokalny
+        //rozbudowac petle o enkapsulacje
         reader.readCharacter();
 
-        while (isStringCharacter(reader.getCurrentCharacter())) {
+        while (isStringCharacter(reader.getCurrentCharacter())) { // petla powinna lykac wszystko az do cudzyslowa albo do konca pliku/tekstu
             content.append(reader.getCurrentCharacter());
             reader.readCharacter();
         }
@@ -95,9 +97,9 @@ public class Lexer {
         return new Token(tokenType, tokenBeginPosition);
     }
 
-    private Token buildKeyWordToken(StringBuilder content, Position tokenBeginPosition) throws IOException {
+    private Token buildKeyWordToken(StringBuilder content, Position tokenBeginPosition) throws IOException { // polaczyc to z identyfikatorem, jesli jest w hashmapie to mamy keyword
 
-        if (!isKeyWordCharacter(reader.getCurrentCharacter()))
+        if (!isKeyWordCharacter(reader.getCurrentCharacter())) //tutaj na isLetter or _
             return null;
 
         while (isKeyWordCharacter(reader.getCurrentCharacter())) {
@@ -134,18 +136,35 @@ public class Lexer {
         }
 
         if (!(character == '(' || character == ')' || character == '{' || character == '}'
-                || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 0xffff) && !isWhiteSpace(character))
+                || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 3) && !isWhiteSpace(character))
             throw new LexerException("Cannot build identifier token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
 
         return new Token(TokenType.IDENTIFIER, content.toString(), position);
     }
 
-    private Number buildNumberToken(StringBuilder content, Position position) throws IOException, LexerException {
+    private Number buildNumberToken(StringBuilder content, Position position) throws IOException{
         char character = reader.getCurrentCharacter();
 
-        if (!('0' <= character && character <= '9'))
+        if (!('0' <= character && character <= '9')) // tu isDigit z klasy Character powinno byc
+            return null;
+        if(!Character.isDigit(character))
             return null;
 
+        int value = 0;
+
+        if(character != '0')
+        {
+            while (Character.isDigit(character))
+            {
+                value *= 10;
+                value += character -'0';
+                reader.readCharacter();
+                character = reader.getCurrentCharacter();
+            }
+        }
+
+        return new Number(value, position);
+        /*
         while (!isWhiteSpace(character) && !(character == '(' || character == ')' || character == '{' || character == '}'
                 || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 0xffff)) {
             content.append(character);
@@ -153,7 +172,7 @@ public class Lexer {
             character = reader.getCurrentCharacter();
         }
 
-        int value;
+        //int value;
 
         try {
             value = Integer.parseInt(content.toString());
@@ -161,7 +180,7 @@ public class Lexer {
             throw new LexerException("Cannot build number token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
         }
 
-        return new Number(value, position);
+        return new Number(value, position);*/
     }
 
     private boolean isWhiteSpace(char character) {

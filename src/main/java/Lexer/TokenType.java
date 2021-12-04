@@ -51,5 +51,5 @@ public enum TokenType {
     COMMENT_TAG_OPENER, // <!--
     COMMENT_TAG_CLOSING, // -->
     HTML_TEXT,
-    EOF
+    ETX
 }

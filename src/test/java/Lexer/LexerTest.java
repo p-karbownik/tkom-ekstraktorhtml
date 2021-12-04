@@ -324,6 +324,15 @@ public class LexerTest {
         Token attributeToken = getLexer(")").getNextToken();
         assertEquals(attributeToken, new Token(TokenType.RIGHT_ROUND_BRACKET));
     }
+
+    @Test
+    @DisplayName("Test wykrywania tokenu RIGHT_ROUND_BRACKET")
+    public void testRightRoundTokenx() throws Exception
+    {
+        Token attributeToken = getLexer("10ą").getNextToken();
+        assertEquals(attributeToken, new Token(TokenType.RIGHT_ROUND_BRACKET));
+    }
+
     @Test
     @DisplayName("Uproszczony kod przykladu numer 1")
     public void testFirstSimplifiedExampleCode() throws IOException {
@@ -392,7 +401,7 @@ public class LexerTest {
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
                         new Token(TokenType.RIGHT_BRACE),
-                        new Token(TokenType.EOF)
+                        new Token(TokenType.ETX)
                 };
         
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -514,7 +523,7 @@ public class LexerTest {
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
                         new Token(TokenType.RIGHT_BRACE),
-                        new Token(TokenType.EOF)
+                        new Token(TokenType.ETX)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));
@@ -667,7 +676,7 @@ public class LexerTest {
                         new Token(TokenType.EVERY),
                         new Token(TokenType.SEMI_COLON),
                         new Token(TokenType.RIGHT_BRACE),
-                        new Token(TokenType.EOF)
+                        new Token(TokenType.ETX)
                 };
 
         List tokenList = new ArrayList<>(Arrays.asList(tokens));

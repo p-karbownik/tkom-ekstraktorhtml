@@ -195,7 +195,7 @@ public class HtmlLexerTest {
                         new Token(TokenType.HTML_TEXT, "cosik"),
                         new Token(TokenType.COMMENT_TAG_CLOSING),
 
-                        new Token(TokenType.EOF)
+                        new Token(TokenType.ETX)
                 };
 
         for(Token t : tokens)

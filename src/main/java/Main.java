@@ -24,7 +24,7 @@ public class Main {
             while (true)
             {
                 Token token = lexer.getNextToken();
-                if(token.equals(new Token(TokenType.EOF)))
+                if(token.equals(new Token(TokenType.ETX)))
                     break;
                 System.out.println("Token: " + token.getType().name()
                 + " content: " + token.getContent() + " " + token.getPosition().toString());
