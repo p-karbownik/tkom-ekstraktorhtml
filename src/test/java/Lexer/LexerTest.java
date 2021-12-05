@@ -326,14 +326,6 @@ public class LexerTest {
     }
 
     @Test
-    @DisplayName("Test wykrywania tokenu RIGHT_ROUND_BRACKET")
-    public void testRightRoundTokenx() throws Exception
-    {
-        Token attributeToken = getLexer("10ą").getNextToken();
-        assertEquals(attributeToken, new Token(TokenType.RIGHT_ROUND_BRACKET));
-    }
-
-    @Test
     @DisplayName("Uproszczony kod przykladu numer 1")
     public void testFirstSimplifiedExampleCode() throws IOException {
         String text = "resource\n{\ntag = a;\n" +
