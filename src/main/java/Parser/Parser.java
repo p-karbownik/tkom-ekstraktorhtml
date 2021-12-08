@@ -1,12 +1,12 @@
 package Parser;
 
 import Lexer.Lexer;
-import Lexer.Token;
+import Lexer.*;
+import Lexer.Number;
 import Lexer.TokenType;
 import Structures.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Parser {
     private final Lexer lexer;
@@ -17,118 +17,171 @@ public class Parser {
         this.lexer = lexer;
     }
 
-    public Resource parse() throws Exception {
-        Resource resource = null;
+    public Resource parseResource() throws Exception {
+
+
+        if(lexer.getCurrentToken().getType() != TokenType.RESOURCE)
+            return null;
+
         TagSentence tagSentence = null;
 
         readToken(TokenType.RESOURCE);
-        readToken(TokenType.LEFT_BRACE);
+        readToken(TokenType.IDENTIFIER);
 
-        tagSentence = parseTagSentence();
+        Token identifier = currentToken;
 
-        ArrayList<FieldDefinition> fieldDefinitions = parseFieldDefinitionBlock();
+        DefinitionBlock definitionBlock = parseDefinitionBlock();
+        return new Resource(currentToken.getContent(), definitionBlock);
 
-        readToken(TokenType.RIGHT_BRACE);
 
-        resource = new Resource(tagSentence, fieldDefinitions);
-        return resource;
+    }
+
+    private DefinitionBlock parseDefinitionBlock() throws Exception
+    {
+        TagSentence tagSentence = parseTagSentence();
+
+        readToken();
+
+        ConditionsBlock conditionsBlock = null;
+
+        if(currentToken.getType() == TokenType.CONDITIONS) {
+            readToken();
+            conditionsBlock = parseConditionsBlock();
+        }
+
+        ClassLine classLine = parseClassLine();
+
+        parseSetFields();
+
+        FieldsDefinitionBlock fieldsDefinitionBlock = parseFieldsDefinitionBlock();
+        AmountSentence amountSentence = parseAmountSentence();
+
+        return DefinitionBlock(tagSentence, conditionsBlock, classLine, fieldsDefinitionBlock, amountSentence);
     }
 
     private TagSentence parseTagSentence() throws Exception {
         readToken(TokenType.TAG);
         readToken(TokenType.ASSIGN_OPERATOR);
-        readToken(TokenType.IDENT);
+        readToken(TokenType.IDENTIFIER);
 
-        TagSentence tagSentence = new TagSentence(currentToken.getContent());
+        String tagName = currentToken.getContent();
 
         readToken(TokenType.SEMI_COLON);
 
-        return tagSentence;
+        return new TagSentence(tagName);
     }
 
-    private ArrayList<Condition> parseConditions() throws Exception {
-        readToken(TokenType.LEFT_BRACE);
-        ArrayList<Condition> conditions = new ArrayList<>();
+    private ConditionsBlock parseConditionsBlock() throws Exception
+    {
+        if(currentToken.getType() != TokenType.LEFT_BRACE)
+            return null;
 
-        readToken(TokenType.IF, TokenType.RIGHT_BRACE);
+        //readToken(TokenType.LEFT_BRACE);
 
-        while (currentToken.getType() == TokenType.IF)
-        {
-            conditions.add(parseConditionSentence());
-            readToken(TokenType.IF, TokenType.RIGHT_BRACE);
-        }
+        ArrayList<ConditionSentence> conditionSentences = new ArrayList<>();
+
+        ConditionSentence conditionSentence = null;
+
+        do{
+            readToken();
+            conditionSentence = parseConditionSentence();
+
+            if(conditionSentence != null)
+                conditionSentences.add(conditionSentence);
+
+        } while (conditionSentence != null);
 
         readToken(TokenType.RIGHT_BRACE);
 
-        return conditions;
+        return new ConditionsBlock(/*conditionSentences*/);
     }
 
-    private Condition parseConditionSentence() throws Exception {
-        readToken(TokenType.LEFT_ROUND_BRACKET, TokenType.THIS, TokenType.PARENT, TokenType.CHILD);
+    private ConditionSentence parseConditionSentence() throws Exception {
 
-        Condition condition;
+        if(currentToken.getType() != TokenType.IF)
+            return null;
 
-        if(currentToken.getType() == TokenType.LEFT_ROUND_BRACKET)
-        {
-            ComplexCondition complexCondition = new ComplexCondition();
+        ArrayList<Condition> conditions = new ArrayList<>();
 
-            while (currentToken.getType() != TokenType.SEMI_COLON) {
-                complexCondition.addCondition(parseCondition());
+        Condition condition = null;
 
-                readToken(TokenType.RIGHT_ROUND_BRACKET);
+        condition = parseCondition();
 
-                readToken(TokenType.OR, TokenType.AND, TokenType.SEMI_COLON);
+        /*
+            if(condition == null)
+                throwException
+         */
+        do {
+            conditions.add(condition);
+        } while (condition != null);
 
-                if(currentToken.getType() != TokenType.SEMI_COLON)
-                {
-                    complexCondition.addOperators(currentToken.getType());
-                    readToken(TokenType.LEFT_BRACE);
-                }
-            }
+        readToken(TokenType.SEMI_COLON);
 
-            condition = complexCondition;
-        }
-        else
-        {
-            condition = parseCondition();
-        }
-
-        if(currentToken.getType() != TokenType.SEMI_COLON)
-            readToken(TokenType.SEMI_COLON);
-
-        return condition;
+        return new ConditionSentence(/* condition*/);
     }
 
-    private SimpleCondition parseCondition() throws Exception {
-        PathInCondition pathInCondition = parsePath();
-
-        if(currentToken.getType() != TokenType.HAS)
-            readToken(TokenType.HAS);
-
+    private Condition parseCondition() throws Exception {
+        ArrayList<Term> terms = new ArrayList<>();
         Term term = parseTerm();
 
-        return new SimpleCondition(pathInCondition, term);
+        //readToken(...);
+
+        terms.add(term);
+
+        while (currentToken.getType() == TokenType.OR)
+        {
+            term = parseTerm();
+            terms.add(term);
+            //readToken(...);
+        }
+
+        return new Condition(/* terms */);
     }
 
     private Term parseTerm() throws Exception {
-        readToken(TokenType.TAG, TokenType.ATTRIBUTE, TokenType.CLASS, TokenType.NO);
+        ArrayList<Factor> factors = new ArrayList<>();
+        Factor factor = parseFactor();
 
-        boolean isNegated = false;
-        TokenType comparisonOperator;
+        //readToken(...);
 
-        if(currentToken.getType() == TokenType.NO)
+        factors.add(factor);
+
+        while (currentToken.getType() == TokenType.AND)
         {
-            readToken(TokenType.TAG, TokenType.ATTRIBUTE, TokenType.CLASS);
-            isNegated = true;
+            factor = parseFactor();
+            factors.add(factor);
+            //readToken(...);
         }
 
-        TokenType subject = currentToken.getType();
-        readToken(TokenType.EQUAL, TokenType.NOT_EQUAL);
-        comparisonOperator = currentToken.getType();
+        return new Term(/* factors */);
+    }
 
-        List<String> valueSet = parseValueSet();
+    private Factor parseFactor() throws Exception
+    {
+        Path path = parsePath();
 
-        return new Term(subject, isNegated, comparisonOperator, valueSet);
+        if(path == null)
+        {
+            readToken(TokenType.LEFT_ROUND_BRACKET);
+
+            Condition condition = parseCondition();
+
+            readToken(TokenType.RIGHT_ROUND_BRACKET);
+
+            return new Factor(/* condition */);
+        }
+
+        else {
+            readToken(TokenType.HAS);
+            FactorObject factorObject = parseFactorObject();
+
+            return new Factor(/* factorObject */);
+        }
+    }
+
+    private FactorObject parseFactorObject()
+    {
+
     }
 
     private ArrayList<String> parseValueSet() throws Exception {
@@ -147,26 +200,33 @@ public class Parser {
             while (currentToken.getType() == TokenType.STRING)
             {
                     values.add(currentToken.getContent());
+                    readToken(/* COMMA, RIGHT_BRACE */ );
+
+                    /*
+                    if(currentToken.getType == COMMA)
+                        readToken(TokenType.STRING);
+                    */
             }
+
             readToken(TokenType.RIGHT_BRACE);
         }
         return values;
     }
 
-    private PathInCondition parsePath() throws Exception {
-        PathInCondition path = new PathInCondition();
+    private Path parsePath() throws Exception {
+        Path path = new Path();
 
-        readToken(TokenType.THIS, TokenType.PARENT, TokenType.CHILD);
+        readToken(TokenType.SELF, TokenType.PARENT, TokenType.CHILD);
 
-        if(currentToken.getType() == TokenType.THIS)
+        if(currentToken.getType() == TokenType.SELF)
         {
-            path.addNode(TokenType.THIS);
+            //path.addNode(TokenType.SELF);
         }
         else if(currentToken.getType() == TokenType.PARENT)
         {
             while (currentToken.getType() == TokenType.PARENT)
             {
-                path.addNode(TokenType.PARENT);
+                //path.addNode(TokenType.PARENT);
                 readToken(TokenType.DOT, TokenType.HAS);
 
                 if(currentToken.getType() == TokenType.HAS)
@@ -179,7 +239,7 @@ public class Parser {
         {
             while (currentToken.getType() == TokenType.CHILD)
             {
-                path.addNode(TokenType.CHILD);
+                //path.addNode(TokenType.CHILD);
                 readToken(TokenType.DOT, TokenType.HAS);
 
                 if(currentToken.getType() == TokenType.HAS)
@@ -192,40 +252,112 @@ public class Parser {
         return path;
     }
 
-    private ClassName parseClassLine() throws Exception {
-        ClassName className = null;
+    private ClassLine parseClassLine() throws Exception {
+        //ClassLine className = null;
 
-        readToken(TokenType.EXPORT);
+        if(currentToken.getType() != TokenType.EXPORT)
+            return null;
+
         readToken(TokenType.TO);
         readToken(TokenType.CLASS);
         readToken(TokenType.ASSIGN_OPERATOR);
-        readToken(TokenType.IDENT);
+        readToken(TokenType.IDENTIFIER);
 
-        className = new ClassName(currentToken.getContent());
+        String className = currentToken.getContent();/// = new ClassLine();//(currentToken.getContent());
 
         readToken(TokenType.SEMI_COLON);
 
-        return className;
+        return new ClassLine(className);
+    }
+
+    private void parseSetFields() throws Exception
+    {
+        mustBe(TokenType.SET);
+        readToken(TokenType.FIELDS);
+        readToken();
+    }
+
+    private FieldDefinitionBlock parseFieldDefinitionBlock() throws Exception
+    {
+        if(currentToken.getType() != TokenType.LEFT_BRACE)
+            return null;
+
+        ArrayList<FieldDefinition> fieldDefinitionArrayList = new ArrayList<>();
+
+        FieldDefinition fieldDefinition = parseFieldDefinition();
+
+        if(fieldDefinition == null)
+            throw new Exception();
+
+        fieldDefinitionArrayList.add(fieldDefinition);
+
+        do{
+            fieldDefinition = parseFieldDefinition();
+
+            if(fieldDefinition != null)
+                fieldDefinitionArrayList.add(fieldDefinition);
+
+        } while (fieldDefinition != null);
+
+        return new FieldDefinitionBlock(fieldDefinitionArrayList);
     }
 
     private FieldDefinition parseFieldDefinition() throws Exception {
-        FieldDefinition fieldDefinition = null;
-        String fieldName;
+        if(currentToken.getType() != TokenType.FIELD)
+            return null;
 
-        readToken(TokenType.IDENT);
+        readToken(TokenType.IDENTIFIER);
 
-        fieldName = currentToken.getContent();
+        String fieldName = currentToken.getContent();
 
-        Pair parsedTypeAndPathToResource = parseTypeAndPathToResource();
+        readToken(TokenType.ASSIGN_OPERATOR);
 
-        readToken(TokenType.SEMI_COLON);
+        PathToResource pathToResource = parsePathToResource();
 
-        fieldDefinition = new FieldDefinition(fieldName, parsedTypeAndPathToResource.first, parsedTypeAndPathToResource.second);
+        if(pathToResource == null)
+            throw new Exception("");
 
-        return fieldDefinition;
+        if(currentToken.getType() == TokenType.SEMI_COLON)
+        {
+            readToken();
+
+            return new FieldDefinition(fieldName, pathToResource);
+        }
+        else if( currentToken.getType() == TokenType.DOT)
+        {
+            readToken(TokenType.ATTRIBUTE);
+            readToken(TokenType.LEFT_SQUARE_BRACKET);
+            readToken(TokenType.IDENTIFIER);
+
+            String identifierContent = currentToken.getContent();
+
+            readToken(TokenType.RIGHT_SQUARE_BRACKET);
+
+            readToken();
+
+            if(currentToken.getType() == TokenType.SEMI_COLON)
+            {
+                readToken();
+
+                return new FieldDefinition(fieldName, pathToResource, identifierContent);
+            }
+
+            else if(currentToken.getType() == TokenType.DOT)
+            {
+                readToken(TokenType.ASIMG);
+                readToken(TokenType.SEMI_COLON);
+                readToken();
+                return new FieldDefinition(fieldName, pathToResource, identifierContent, true);
+            }
+        }
+        else
+        {
+            throw new Exception("");
+            return null;
+        }
     }
-
-    private ArrayList<FieldDefinition> parseFieldDefinitionBlock() throws Exception {
+/*
+    private ArrayList<FieldDefinition> parseFieldsDefinitionBlock() throws Exception {
         readToken(TokenType.SET);
         readToken(TokenType.FIELDS);
         readToken(TokenType.LEFT_BRACE);
@@ -242,8 +374,8 @@ public class Parser {
 
         return fieldDefinitionsList;
 
-    }
-
+    }*/
+/*
     private class Pair {
         public PathToResource first;
         public FieldContent second;
@@ -254,15 +386,16 @@ public class Parser {
             this.second = second;
         }
     }
-
+*/
+    /*
     private Pair parseTypeAndPathToResource() throws Exception {
         PathToResource path = new PathToResource();
 
         readToken(TokenType.FROM);
-        readToken(TokenType.THIS, TokenType.TAG);
+        readToken(TokenType.SELF, TokenType.TAG);
 
         switch (currentToken.getType()) {
-            case THIS:
+            case SELF:
                 path.addNodeToPath("this", 0);
 
                 
@@ -270,7 +403,7 @@ public class Parser {
 
             case TAG:
                 while (currentToken.getType() == TokenType.TAG) {
-                    readToken(TokenType.IDENT);
+                    readToken(TokenType.IDENTIFIER);
                     String tagName = currentToken.getContent();
                     
                     readToken(TokenType.NUMBER);
@@ -279,7 +412,7 @@ public class Parser {
                     path.addNodeToPath(tagName, Integer.parseInt(tagNumber));
                     
                     readToken(TokenType.DOT);
-                    readToken(TokenType.TAG, TokenType.TEXT, TokenType.ATTRIBUTE);
+                    //readToken(TokenType.TAG, TokenType.TEXT, TokenType.ATTRIBUTE);
                 }
                 break;
         }
@@ -288,53 +421,136 @@ public class Parser {
 
         return new Pair(path, fieldContent);
     }
-
+*/
+    /*
     private FieldContent parseFieldContent() throws Exception {
         switch (currentToken.getType())
         {
             case ATTRIBUTE:
-                readToken(TokenType.IDENT);
+                readToken(TokenType.IDENTIFIER);
                 String attributeName = currentToken.getContent();
                 readToken(TokenType.DOT);
-                readToken(TokenType.IMG, TokenType.TEXT);
+                //readToken(TokenType.ASIMG, TokenType.TEXT);
 
-                if (currentToken.getType() == TokenType.IMG)
-                    return new FieldContent(attributeName, TokenType.IMG);
-                else if(currentToken.getType() == TokenType.TEXT)
-                    return new FieldContent(attributeName, TokenType.TEXT);
+                if (currentToken.getType() == TokenType.ASIMG)
+                    return new FieldContent(attributeName, TokenType.ASIMG);
+               // else if(currentToken.getType() == TokenType.TEXT)
+                   // return new FieldContent(attributeName, TokenType.TEXT);
                 else
                     throw new Exception("exception");
 
-            case TEXT:
-                return new FieldContent(TokenType.TEXT);
+           // case TEXT:
+              //  return new FieldContent(TokenType.TEXT);
 
             default:
                 throw new Exception("exception");
         }
 
     }
+    */
+
+
+    private PathToResource parsePathToResource() throws Exception
+    {
+        if(currentToken.getType() != TokenType.FROM)
+            return null;
+
+        readToken(TokenType.LEFT_BRACE);
+
+        readToken();
+
+        ArrayList<PathElement> pathElements = new ArrayList<>();
+
+        if(currentToken.getType() == TokenType.SELF)
+        {
+            pathElements.add(new SelfPathElement());
+            readToken();
+        }
+        else
+        {
+            TagPathElement tagPathElement = parseTagPathElement();
+
+            if(tagPathElement == null)
+                throw new Exception("");
+
+            pathElements.add(tagPathElement);
+            readToken();
+
+            while (currentToken.getType() == TokenType.DOT)
+            {
+                readToken();
+                tagPathElement = parseTagPathElement();
+
+                if(tagPathElement == null)
+                    throw new Exception("");
+
+                pathElements.add(tagPathElement);
+                readToken();
+            }
+        }
+
+        mustBe(TokenType.RIGHT_ROUND_BRACKET);
+
+        return new PathToResource(pathElements);
+    }
+
+    private TagPathElement parseTagPathElement() throws Exception
+    {
+        if(currentToken.getType() != TokenType.TAG)
+            return null;
+
+        readToken(TokenType.LEFT_SQUARE_BRACKET);
+        readToken(TokenType.IDENTIFIER);
+
+        String identifierContent = currentToken.getContent();
+
+        readToken(TokenType.RIGHT_SQUARE_BRACKET);
+
+        readToken();
+
+        int number = -1;
+
+        if(currentToken.getType() == TokenType.LEFT_SQUARE_BRACKET)
+        {
+            readToken(TokenType.NUMBER);
+
+            number = ((Number) currentToken).getValue();
+
+            readToken(TokenType.RIGHT_SQUARE_BRACKET);
+            readToken();
+        }
+
+        return new TagPathElement(identifierContent, number);
+    }
 
     private AmountSentence parseAmountSentence() throws Exception {
-        AmountSentence amountSentence = null;
 
-        readToken(TokenType.AMOUNT);
+        if(currentToken.getType() != TokenType.AMOUNT)
+            return null;
+
         readToken(TokenType.ASSIGN_OPERATOR);
         readToken(TokenType.NUMBER, TokenType.EVERY);
 
-        switch (currentToken.getType())
-        {
-            case NUMBER:
-                amountSentence = new AmountSentence(Integer.parseInt(currentToken.getContent()));
-                break;
+        boolean isEvery = false;
+        int value = 0;
 
-            case EVERY:
-                amountSentence = new AmountSentence(true);
-                break;
-        }
+        if (currentToken.getType() == TokenType.EVERY)
+            isEvery = true;
+        else
+            value = ((Number) currentToken).getValue();
 
         readToken(TokenType.SEMI_COLON);
+        readToken();
 
-        return amountSentence;
+        if(isEvery)
+            return new AmountSentence(true);
+        else
+            return new AmountSentence(value);
+
+    }
+
+    private void readToken() throws Exception {
+        currentToken = lexer.getNextToken();
     }
 
     private void readToken(TokenType... tokenType) throws Exception {
@@ -349,6 +565,11 @@ public class Parser {
             }
 
         if(throwException)
+            throw new Exception("");
+    }
+
+    private void mustBe(TokenType expected) throws Exception {
+        if(currentToken.getType() != expected)
             throw new Exception("");
     }
 }

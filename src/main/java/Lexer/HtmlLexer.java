@@ -1,97 +1,151 @@
 package Lexer;
 
-import Exceptions.UnrecognisedTokenException;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 
-//TO:DO wydzielenie czesci wspolnych lexerow do klasy zewnetrznej
+import Exceptions.LexerException;
+import Reader.*;
 
 public class HtmlLexer {
-    private final static int startRow = 1;
-    private final static int startColumn = 0;
-    private final static int tabLength = 8;
-
-    private final BufferedReader inputReader;
-    private int currentCharacter;
+    private final Reader reader;
     private HashMap<String, TokenType> keyWords;
-    private final Position inputReaderPosition;
 
-    public HtmlLexer(BufferedReader inputReader) throws IOException {
-        this.inputReader = inputReader;
+    public HtmlLexer(Reader reader) throws IOException {
+        this.reader = reader;
         initialiseKeyWords();
-        inputReaderPosition = new Position(startRow,startColumn);
-        readCharacter();
+        reader.readCharacter();
     }
 
-    public Token getNextToken() throws Exception {
-        Token nextToken = buildToken();
-        readCharacter();
+    public Token getNextToken() throws IOException, LexerException{
+        Token nextToken = null;
+        StringBuilder content = new StringBuilder();
+        Position startPosition = reader.getCurrentPosition();
 
+        while (isWhiteSpace(reader.getCurrentCharacter()))
+            reader.readCharacter();
+
+        if(reader.getCurrentCharacter() == 3)
+            nextToken = new Token(TokenType.ETX);
+
+        if(nextToken == null)
+            nextToken = buildKeyWordToken(content, startPosition);
+
+        if(nextToken == null)
+        {
+            nextToken = buildHTMLtextToken(content, startPosition);
+        }
+
+        if(nextToken == null)
+            throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn() + "with content: " + content.toString());
         return nextToken;
     }
 
-    private Token buildToken() throws IOException, CloneNotSupportedException, UnrecognisedTokenException {
-        StringBuilder content = new StringBuilder();
-        Position startPosition = (Position) inputReaderPosition.clone();
+    private Token buildHTMLtextToken(StringBuilder content, Position position) throws IOException {
+        char character = reader.getCurrentCharacter();
 
-        while (isWhiteSpace(currentCharacter))
-            readCharacter();
-
-        if(isKeyWordCharacter(currentCharacter))
+        while(character != 3 && !isWhiteSpace(character) && !isKeyWordCharacter(character)) //przemyslec podejscie do namespacow
         {
-            while (isKeyWordCharacter(currentCharacter))
-            {
-                content.append((char) currentCharacter);
-                readCharacter();
-            }
-
-            return buildKeyWordToken(content.toString(), startPosition);
-
+            content.append(character);
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
         }
-        //TO DO: oprogramowanie reszty
-        return null;
+
+        return new Token(TokenType.HTML_TEXT, content.toString(), position);
     }
 
+    private Token buildKeyWordToken(StringBuilder content, Position tokenBeginPosition) throws IOException {
 
-    //TO:DO dopisać testy do tej metody
-    private void readCharacter() throws IOException {
-        if(currentCharacter == '\n') //rozbudowac o pozostale przypadki
-        {
-            inputReaderPosition.setNextRow();
-            inputReaderPosition.setColumn(startColumn);
-        }
-        else if(currentCharacter == '\t')
-        {
-            inputReaderPosition.increaseColumn(tabLength);
-        }
-        else if( currentCharacter == '\r')
-        {
-            inputReaderPosition.setColumn(startColumn);
-        }
-        else
-            inputReaderPosition.setNextColumn();
-
-        currentCharacter = inputReader.read();
-    }
-
-    private Token buildKeyWordToken(String content, Position tokenBeginPosition) {
-        TokenType tokenType = keyWords.get(content);
-        System.out.println(content);
-        if(tokenType == null)
+        if(!isKeyWordCharacter(reader.getCurrentCharacter()))
             return null;
 
-        return new Token(tokenType, tokenBeginPosition);
+        char character = reader.getCurrentCharacter();
+        content.append(character);
+
+        if(character == '<')
+        {
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
+
+            if(character == '!' || character == '/') // rozlaczyc ten warunek na oddzielne ify, wtedy nie trzeba hashMapy na to
+            {
+                content.append(character);
+                reader.readCharacter();
+                character = reader.getCurrentCharacter();
+
+                if(character == '-')
+                {
+                    content.append(character);
+                    reader.readCharacter();
+                    character = reader.getCurrentCharacter();
+
+                    if(character == '-')
+                    {
+                        content.append(character);
+                        reader.readCharacter();
+                    }
+                    else
+                        return new Token(TokenType.HTML_TEXT, content.toString());
+                }
+            }
+            return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+        }
+
+        else if(character == '\"' || character == '=' || character == '>') //
+        {
+            reader.readCharacter();
+            return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+        }
+
+        else if(character == '/')
+        {
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
+
+            if(character == '>')
+            {
+                content.append(character);
+                reader.readCharacter();
+                return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+            }
+
+            return new Token(TokenType.HTML_TEXT, content.toString());
+        }
+
+        else if(character == '-')
+        {
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
+
+            if(character == '-')
+            {
+                content.append(character);
+                reader.readCharacter();
+                character = reader.getCurrentCharacter();
+
+                if(character == '>')
+                {
+                    content.append(character);
+                    reader.readCharacter();
+
+                    return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+                }
+                else
+                    return new Token(TokenType.HTML_TEXT, content.toString());
+            }
+
+            return new Token(TokenType.HTML_TEXT, content.toString());
+        }
+        else
+            return null;
     }
 
-    private boolean isWhiteSpace(int character)
+    private boolean isWhiteSpace(char character)
     {
         return character == ' ' || character == '\t'
                 || character == '\n' || character == '\r';
     }
 
-    private void initialiseKeyWords()
-    {
+    private void initialiseKeyWords() {
         keyWords = new HashMap<>();
 
         keyWords.put("<", TokenType.TAG_OPENER);
@@ -101,19 +155,13 @@ public class HtmlLexer {
         keyWords.put("/>", TokenType.EMPTY_CLOSING_TAG);
         keyWords.put(">", TokenType.TAG_CLOSING_MARK);
         keyWords.put("</", TokenType.CLOSING_TAG);
+        keyWords.put("<!--", TokenType.COMMENT_TAG_OPENER);
+        keyWords.put("-->", TokenType.COMMENT_TAG_CLOSING);
     }
 
-    private boolean isKeyWordCharacter(int character) {
+    private boolean isKeyWordCharacter(char character) {
         return character == '!' || character == '=' || character == '<' || character == '\"' || character == '>'
-                || character == '/';
-    }
-
-    private boolean isStringCharacter(int character)
-    {
-        return ('A' <= character && character <= 'Z') ||
-                ('a' <= character && character <= 'z')
-                || character == ' ' || character == '$' || character == '_'
-                || character == '.' || character == '-';
+                || character == '/' || character == '-';
     }
 
 }

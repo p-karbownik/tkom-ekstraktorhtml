@@ -11,6 +11,14 @@ public class Term
     boolean isNegated;
     List<String> valuesSet;
 
+    public Term()
+    {
+        termSubject = null;
+        comparisonOperator = null;
+        isNegated = false;
+        valuesSet = null;
+    }
+
     public Term(TokenType termSubject, boolean isNegated, TokenType comparisonOperator, List<String> valuesSet)
     {
         this.termSubject = termSubject;

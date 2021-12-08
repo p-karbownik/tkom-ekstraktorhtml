@@ -1,14 +1,12 @@
 package Exceptions;
 
-import Lexer.Position;
+import Reader.Position;
 
 public class LexerException extends Exception
 {
-    protected final Position position;
-
-    public LexerException(Position p)
+    public LexerException(String s)
     {
-        position = p;
+        super(s);
     }
 
 }

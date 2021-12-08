@@ -1,4 +1,4 @@
 package Structures;
 
-public abstract class Condition {
+public class Condition {
 }
