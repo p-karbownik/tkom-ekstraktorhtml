@@ -23,7 +23,7 @@ public class PathToResource
 
     private List<PathNode> path;
 
-    public PathToResource()
+    public PathToResource(ArrayList<PathElement> elements)
     {
         path = new ArrayList<>();
     }

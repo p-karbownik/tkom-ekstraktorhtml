@@ -10,12 +10,18 @@ public class Lexer {
     private Reader reader;
     private HashMap<String, TokenType> keyWords;
     private HashMap<String, TokenType> operators;
+    private Token currentToken;
 
     public Lexer(Reader reader) throws IOException {
         this.reader = reader;
         initialiseKeyWords();
         initialiseOperators();
         reader.readCharacter();
+        currentToken = null;
+    }
+
+    public Token getCurrentToken(){
+        return currentToken;
     }
 
     public Token getNextToken() throws Exception {
@@ -48,6 +54,8 @@ public class Lexer {
 
         if (nextToken == null)
             throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn());
+        else
+            currentToken = nextToken;
 
         return nextToken;
     }
