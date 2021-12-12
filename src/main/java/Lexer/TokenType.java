@@ -35,16 +35,19 @@ public enum TokenType {
     NOT_EQUAL, // !=
     ASSIGN_OPERATOR, // =, this type is used in HTML too
     DOT, // .
+    COMMA, // ,
     SEMI_COLON, // ;
     NUMBER, // 1234567890
     STRING, // "String"
     IDENTIFIER,
     SELF,
+    RANGE,
 
     //tokens for HTML
     CLOSING_TAG,
-    DOCTYPE,
+    DOCTYPE, //!
     EMPTY_CLOSING_TAG,
+    SINGLE_QUOTE,
     QUOTE, // "
     TAG_CLOSING_MARK, // >
     TAG_OPENER, // <

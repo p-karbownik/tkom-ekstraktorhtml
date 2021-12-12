@@ -84,16 +84,16 @@ public class HtmlLexer {
                         reader.readCharacter();
                     }
                     else
-                        return new Token(TokenType.HTML_TEXT, content.toString());
+                        return new Token(TokenType.HTML_TEXT, content.toString(), tokenBeginPosition);
                 }
             }
-            return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+            return new Token(keyWords.get(content.toString()), content.toString(), tokenBeginPosition);
         }
 
         else if(character == '\"' || character == '=' || character == '>') //
         {
             reader.readCharacter();
-            return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+            return new Token(keyWords.get(content.toString()), content.toString(), tokenBeginPosition);
         }
 
         else if(character == '/')
@@ -105,10 +105,10 @@ public class HtmlLexer {
             {
                 content.append(character);
                 reader.readCharacter();
-                return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+                return new Token(keyWords.get(content.toString()), content.toString(), tokenBeginPosition);
             }
 
-            return new Token(TokenType.HTML_TEXT, content.toString());
+            return new Token(TokenType.HTML_TEXT, content.toString(), tokenBeginPosition);
         }
 
         else if(character == '-')
@@ -127,13 +127,13 @@ public class HtmlLexer {
                     content.append(character);
                     reader.readCharacter();
 
-                    return new Token(keyWords.get(content.toString()), tokenBeginPosition);
+                    return new Token(keyWords.get(content.toString()), content.toString(), tokenBeginPosition);
                 }
                 else
-                    return new Token(TokenType.HTML_TEXT, content.toString());
+                    return new Token(TokenType.HTML_TEXT, content.toString(), tokenBeginPosition);
             }
 
-            return new Token(TokenType.HTML_TEXT, content.toString());
+            return new Token(TokenType.HTML_TEXT, content.toString(), tokenBeginPosition);
         }
         else
             return null;
@@ -150,6 +150,7 @@ public class HtmlLexer {
 
         keyWords.put("<", TokenType.TAG_OPENER);
         keyWords.put("\"", TokenType.QUOTE);
+        keyWords.put("'", TokenType.SINGLE_QUOTE);
         keyWords.put("<!", TokenType.DOCTYPE);
         keyWords.put("=", TokenType.ASSIGN_OPERATOR);
         keyWords.put("/>", TokenType.EMPTY_CLOSING_TAG);
@@ -160,7 +161,7 @@ public class HtmlLexer {
     }
 
     private boolean isKeyWordCharacter(char character) {
-        return character == '!' || character == '=' || character == '<' || character == '\"' || character == '>'
+        return character == '!' || character == '=' || character == '\'' || character == '<' || character == '\"' || character == '>'
                 || character == '/' || character == '-';
     }
 

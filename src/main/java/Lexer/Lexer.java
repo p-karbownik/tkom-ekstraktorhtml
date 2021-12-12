@@ -89,7 +89,7 @@ public class Lexer {
         StringBuilder content = new StringBuilder();
 
         if (character == '(' || character == ')' || character == '{' || character == '}'
-                || character == ';' || character == '.' || character == '[' || character == ']') {
+                || character == ';' || character == '.' || character == ',' || character == '[' || character == ']') {
             content.append(character);
             reader.readCharacter();
         }
@@ -99,8 +99,10 @@ public class Lexer {
             reader.readCharacter();
             character = reader.getCurrentCharacter();
 
-            if (character == '=')
+            if (character == '=') {
                 content.append(character);
+                reader.readCharacter();
+            }
         }
 
         TokenType tokenType = operators.get(content.toString());
@@ -232,6 +234,7 @@ public class Lexer {
         keyWords.put("every", TokenType.EVERY);
         keyWords.put("from", TokenType.FROM);
         keyWords.put("amount", TokenType.AMOUNT);
+        keyWords.put("range", TokenType.RANGE);
 
         keyWords.put("not", TokenType.NOT);
         keyWords.put("field", TokenType.FIELD);
@@ -244,6 +247,7 @@ public class Lexer {
         operators.put("==", TokenType.EQUAL);
         operators.put("=", TokenType.ASSIGN_OPERATOR);
         operators.put(".", TokenType.DOT);
+        operators.put(",", TokenType.COMMA);
         operators.put(")", TokenType.RIGHT_ROUND_BRACKET);
         operators.put("{", TokenType.LEFT_BRACE);
         operators.put("}", TokenType.RIGHT_BRACE);
