@@ -7,15 +7,15 @@ public class DefinitionBlock {
     private ConditionsBlock conditionsBlock;
     private ClassLine classLine;
     private FieldDefinitionBlock fieldsDefinitionBlock;
-    private AmountSentence amountSentence;
+    private QuantitativeConstraintSentence quantitativeConstraintSentence;
 
-    public DefinitionBlock(TagSentence tagSentence, ConditionsBlock conditionsBlock, ClassLine classLine, FieldDefinitionBlock fieldsDefinitionBlock, AmountSentence amountSentence)
+    public DefinitionBlock(TagSentence tagSentence, ConditionsBlock conditionsBlock, ClassLine classLine, FieldDefinitionBlock fieldsDefinitionBlock, QuantitativeConstraintSentence quantitativeConstraintSentence)
     {
         this.tagSentence = tagSentence;
         this.conditionsBlock = conditionsBlock;
         this.classLine = classLine;
         this.fieldsDefinitionBlock = fieldsDefinitionBlock;
-        this.amountSentence = amountSentence;
+        this.quantitativeConstraintSentence = quantitativeConstraintSentence;
     }
 
     @Override
@@ -23,7 +23,7 @@ public class DefinitionBlock {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DefinitionBlock that = (DefinitionBlock) o;
-        return Objects.equals(tagSentence, that.tagSentence) && Objects.equals(conditionsBlock, that.conditionsBlock) && Objects.equals(classLine, that.classLine) && Objects.equals(fieldsDefinitionBlock, that.fieldsDefinitionBlock) && Objects.equals(amountSentence, that.amountSentence);
+        return Objects.equals(tagSentence, that.tagSentence) && Objects.equals(conditionsBlock, that.conditionsBlock) && Objects.equals(classLine, that.classLine) && Objects.equals(fieldsDefinitionBlock, that.fieldsDefinitionBlock) && Objects.equals(quantitativeConstraintSentence, that.quantitativeConstraintSentence);
     }
 
 }

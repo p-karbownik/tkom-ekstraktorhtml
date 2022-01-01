@@ -1,6 +1,6 @@
 package Parser.Structures;
 
-public class RangeSentence {
+public class RangeSentence implements QuantitativeConstraintSentence{
     private int from;
     private int to;
 

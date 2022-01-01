@@ -45,8 +45,8 @@ public enum TokenType {
 
     //tokens for HTML
     CLOSING_TAG,
-    DOCTYPE, //!
-    EMPTY_CLOSING_TAG,
+    DOCTYPE, //<!
+    EMPTY_CLOSING_TAG, // />
     SINGLE_QUOTE,
     QUOTE, // "
     TAG_CLOSING_MARK, // >

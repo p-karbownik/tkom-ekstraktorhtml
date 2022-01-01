@@ -63,7 +63,7 @@ public class ParserTest {
         try {
             TagSentence tagSentence = parser.parseTagSentenceForTest();
 
-            assertEquals(tagSentence, new TagSentence("img"));
+            assertEquals(new TagSentence("img"), tagSentence);
         } catch (Exception e)
         {
             assert false;

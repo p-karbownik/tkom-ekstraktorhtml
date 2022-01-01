@@ -1,6 +1,6 @@
 package Parser.Structures;
 
-public class AmountSentence
+public class AmountSentence implements QuantitativeConstraintSentence
 {
     private final int amount;
     private boolean isAmountEqualEvery = false;
