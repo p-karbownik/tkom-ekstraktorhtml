@@ -1,6 +1,4 @@
-package Exceptions;
-
-import Reader.Position;
+package exceptions;
 
 public class LexerException extends Exception
 {
@@ -8,5 +6,4 @@ public class LexerException extends Exception
     {
         super(s);
     }
-
 }

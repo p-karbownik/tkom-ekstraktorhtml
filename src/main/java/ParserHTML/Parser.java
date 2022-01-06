@@ -1,6 +1,6 @@
 package ParserHTML;
 
-import Exceptions.LexerException;
+import exceptions.LexerException;
 import Lexer.HtmlLexer;
 import Lexer.Token;
 import Lexer.TokenType;

@@ -1,6 +1,6 @@
 package Lexer;
 
-import Exceptions.LexerException;
+import exceptions.LexerException;
 import Reader.*;
 
 import java.io.IOException;
@@ -24,18 +24,16 @@ public class Lexer {
         return currentToken;
     }
 
-    public Token getNextToken() throws Exception {
+    public Token getNextToken() throws IOException, LexerException {
         Token nextToken = null;
 
-        //StringBuilder content = new StringBuilder();
-        //Character.isWhitespace()
-        while (Character.isWhitespace(reader.getCurrentCharacter())) //skorzystac z metody w Char <- done
+        while (Character.isWhitespace(reader.getCurrentCharacter()))
             reader.readCharacter();
 
         Position startPosition = reader.getCurrentPosition();
 
         if (reader.getCurrentCharacter() == 3)
-            nextToken = new Token(TokenType.ETX); // EOF zmienić na ETX - done
+            nextToken = new Token(TokenType.ETX);
 
         if (nextToken == null)
             nextToken = buildStringToken(startPosition);
@@ -49,9 +47,6 @@ public class Lexer {
         if (nextToken == null)
             nextToken = buildIdentifierOrKeywordToken(startPosition);
 
-        //if (nextToken == null)
-        //    nextToken = buildIdentifierToken(content, startPosition);
-
         if (nextToken == null)
             throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn());
         else
@@ -64,13 +59,12 @@ public class Lexer {
 
         if (reader.getCurrentCharacter() != '\"')
             return null;
-        //content mozna zrobic lokalny -> done
-        //rozbudowac petle o enkapsulacje
+
         reader.readCharacter();
 
         StringBuilder content = new StringBuilder();
 
-        while (reader.getCurrentCharacter() != '\"' && reader.getCurrentCharacter() != 3) { // petla powinna lykac wszystko az do cudzyslowa albo do konca pliku/tekstu <- done
+        while (reader.getCurrentCharacter() != '\"' && reader.getCurrentCharacter() != 3) {
             content.append(reader.getCurrentCharacter());
             reader.readCharacter();
         }
@@ -113,9 +107,9 @@ public class Lexer {
         return new Token(tokenType, tokenBeginPosition);
     }
 
-    private Token buildIdentifierOrKeywordToken(Position tokenBeginPosition) throws IOException { // polaczyc to z identyfikatorem, jesli jest w hashmapie to mamy keyword
+    private Token buildIdentifierOrKeywordToken(Position tokenBeginPosition) throws IOException {
 
-        if (!(Character.isLetter(reader.getCurrentCharacter()) || reader.getCurrentCharacter() == '_')) //tutaj na isLetter or _
+        if (!(Character.isLetter(reader.getCurrentCharacter()) || reader.getCurrentCharacter() == '_'))
             return null;
 
         StringBuilder content = new StringBuilder();
@@ -124,7 +118,7 @@ public class Lexer {
                 || reader.getCurrentCharacter() == '_'
                 || reader.getCurrentCharacter() == '$'
                 || reader.getCurrentCharacter() == '!'
-                || reader.getCurrentCharacter() == '-')/*isKeyWordCharacter(reader.getCurrentCharacter()))*/ {
+                || reader.getCurrentCharacter() == '-'){
             content.append(reader.getCurrentCharacter());
             reader.readCharacter();
         }
@@ -136,34 +130,7 @@ public class Lexer {
 
         return new Token(tokenType, tokenBeginPosition);
     }
-/*
-    private Token buildIdentifierToken(StringBuilder content, Position position) throws IOException, LexerException {
-        char character = reader.getCurrentCharacter();
 
-        if (content.toString().isEmpty()) {
-            if (('A' <= character && character <= 'Z') || ('a' <= character && character <= 'z') ||
-                    character == '_' || character == '$' || character == '!') {
-                content.append(character);
-                reader.readCharacter();
-                character = reader.getCurrentCharacter();
-            } else
-                throw new LexerException("Cannot build identifier token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
-        }
-
-        while (('A' <= character && character <= 'Z') || ('a' <= character && character <= 'z') ||
-                character == '_' || character == '$' || character == '!' || character == '-' || ('0' <= character && character <= '9')) {
-            content.append(character);
-            reader.readCharacter();
-            character = reader.getCurrentCharacter();
-        }
-
-        if (!(character == '(' || character == ')' || character == '{' || character == '}'
-                || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 3) && !isWhiteSpace(character))
-            throw new LexerException("Cannot build identifier token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
-
-        return new Token(TokenType.IDENTIFIER, content.toString(), position);
-    }
-*/
     private Number buildNumberToken(Position position) throws IOException{
         char character = reader.getCurrentCharacter();
 
@@ -184,30 +151,8 @@ public class Lexer {
         }
 
         return new Number(value, position);
-        /*
-        while (!isWhiteSpace(character) && !(character == '(' || character == ')' || character == '{' || character == '}'
-                || character == ';' || character == '.' || character == '[' || character == ']' || character == '!' || character == '=' || character == 0xffff)) {
-            content.append(character);
-            reader.readCharacter();
-            character = reader.getCurrentCharacter();
-        }
-
-        //int value;
-
-        try {
-            value = Integer.parseInt(content.toString());
-        } catch (NumberFormatException e) {
-            throw new LexerException("Cannot build number token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
-        }
-
-        return new Number(value, position);*/
     }
-/*
-    private boolean isWhiteSpace(char character) {
-        return character == ' ' || character == '\t'
-                || character == '\n' || character == '\r';
-    }
-*/
+
     private void initialiseKeyWords() {
         keyWords = new HashMap<>();
 
@@ -256,17 +201,4 @@ public class Lexer {
         operators.put("[", TokenType.LEFT_SQUARE_BRACKET);
         operators.put("]", TokenType.RIGHT_SQUARE_BRACKET);
     }
-/*
-    private boolean isStringCharacter(int character) {
-        return ('A' <= character && character <= 'Z') ||
-                ('a' <= character && character <= 'z')
-                || character == ' ' || character == '$' || character == '_'
-                || character == '.' || character == '-'
-                || ('0' <= character && character <= '9');
-    }
-
-    private boolean isKeyWordCharacter(int character) {
-        return ('a' <= character && character <= 'z' || character == 'I');
-    }
-*/
 }

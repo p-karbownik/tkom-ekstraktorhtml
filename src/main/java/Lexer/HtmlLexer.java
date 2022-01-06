@@ -3,7 +3,7 @@ package Lexer;
 import java.io.IOException;
 import java.util.HashMap;
 
-import Exceptions.LexerException;
+import exceptions.LexerException;
 import Reader.*;
 
 public class HtmlLexer {
