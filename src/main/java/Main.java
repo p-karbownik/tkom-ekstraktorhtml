@@ -1,40 +1,23 @@
-import Lexer.Lexer;
-import Lexer.Token;
-import Lexer.TokenType;
+
+import Lexer.HtmlLexer;
+import ParserHTML.Parser;
+import ParserHTML.Structures.Root;
 import Reader.Reader;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+
 
 public class Main {
-    public static void main(String args[]) {
-        //wczytaj zadany plik
-        if(args.length == 0)
-        {
-            System.out.println("Brak sciezki pliku wejsciowego");
-            return;
-        }
+    public static void main(String args[]) throws Exception {
+        BufferedReader in = new BufferedReader(new FileReader(args[0]));
 
-        File file = new File(args[0]);
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            Lexer lexer = new Lexer(new Reader(br));
+        Parser parser = new Parser(new HtmlLexer(new Reader(in)));
+        parser.parse();
+        Root root = parser.getRoot();
 
-            while (true)
-            {
-                Token token = lexer.getNextToken();
-                if(token.equals(new Token(TokenType.ETX)))
-                    break;
-                System.out.println("Token: " + token.getType().name()
-                + " content: " + token.getContent() + " " + token.getPosition().toString());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        //Wyswietl wszystkie tokony po kolei, jakie sa
-
-        //zakoncz dzialanie
+        System.out.println("Koniec");
     }
 }

@@ -47,17 +47,14 @@ public class ParserTest {
         ArrayList<Attribute> parsedAttributesArrayList = parser.parseAttributesForTest();
         ArrayList<Attribute> expectedAttributes = new ArrayList<>();
 
-        ArrayList<String> values = new ArrayList<>();
-        values.add("img_girl.jpg");
-        expectedAttributes.add(new Attribute("src", values));
+        String value = "img_girl.jpg";
+        expectedAttributes.add(new Attribute("src", value));
 
-        values = new ArrayList<>();
-        values.add("500");
-        expectedAttributes.add(new Attribute("width", values));
+        String value1 = "500";
+        expectedAttributes.add(new Attribute("width", value1));
 
-        values = new ArrayList<>();
-        values.add("600");
-        expectedAttributes.add(new Attribute("height", values));
+        String value2 = "600";
+        expectedAttributes.add(new Attribute("height", value2));
 
         assertEquals(expectedAttributes, parsedAttributesArrayList);
     }
@@ -178,6 +175,7 @@ public class ParserTest {
 
         parser.parseTagForTest();
         parser.parseClosingTagForTest();
+
         Root parsedRoot = parser.getRoot();
         Root expectedRoot = new Root();
         ArrayList<Attribute> attributes = new ArrayList<>();
@@ -203,12 +201,8 @@ public class ParserTest {
         Root expectedRoot = new Root();
 
         ArrayList<Attribute> attributes = new ArrayList<>();
-        ArrayList<String> values = new ArrayList<>();
-        values.add("https:");
-        values.add("/");
-        values.add("/");
-        values.add("www.w3schools.com");
-        attributes.add(new Attribute("href", values));
+        String value = "https://www.w3schools.com";
+        attributes.add(new Attribute("href", value));
 
         Tag tag = new Tag("a", attributes);
         expectedRoot.addChild(tag);

@@ -6,6 +6,7 @@ import Lexer.Token;
 import Lexer.TokenType;
 import ParserHTML.Structures.*;
 
+import javax.swing.text.html.HTML;
 import java.io.IOException;
 import java.util.*;
 
@@ -16,7 +17,7 @@ public class Parser {
     private Root root;
     private HashMap<String, String> voidTags;
 
-    Parser(HtmlLexer lexer)
+    public Parser(HtmlLexer lexer)
     {
         this.lexer = lexer;
         buildVoidTagsHashMap();
@@ -29,21 +30,41 @@ public class Parser {
         elementsDeque = new ArrayDeque<>();
         elementsDeque.push(root);
         parseDOCTYPE();
+        int last100 = 0;
 
-        while (currentToken.getType() != TokenType.ETX)
+        boolean result = true;
+
+        while (result)
         {
+            result = false;
+
+            if(currentToken.getType() == TokenType.COMMENT_TAG_OPENER) {
+                readToken();
+                result = true;
+                continue;
+            }
+
+            result = parseOpeningTag();
+
+            if(!result)
+                result = parseClosingTag();
+            if(!result)
+                result = parseText();
+
+            /*
             if(currentToken.getType() == TokenType.TAG_OPENER) // te ify lamia zasade jednej odpowiedzialnosci w kodzie wywalic do parse
                 parseOpeningTag(); // parseTag i inne powinny zwracac, czy udalo sie przeparsowac czy nie, te ify wstawic na poczatek kazdej odpowiadajcej metody, co pozwoli na zlikwidowaniu zaleznosci while od ETX
             else if(currentToken.getType() == TokenType.HTML_TEXT)
                 parseText();
             else if(currentToken.getType() == TokenType.CLOSING_TAG)
                 parseClosingTag();
-            /*else if(currentToken.getType() == TokenType.DOCTYPE)
+            else if(currentToken.getType() == TokenType.DOCTYPE)
                 throw new Exception();
             else if(currentToken.getType() == TokenType.EMPTY_CLOSING_TAG)
-                throw new Exception(); */ // do wyrzucenia pacz uwagi wyzej
-            else if(currentToken.getType() == TokenType.COMMENT_TAG_OPENER)
-                skipComment();
+                throw new Exception();  // do wyrzucenia pacz uwagi wyzej
+
+            */
+
         }
         //skonczylismy parsowanie tego co sie da => sprawdzamy czy jest etx
         elementsDeque.pop(); // wyrzucenie korzenia z kolejki
@@ -57,8 +78,11 @@ public class Parser {
         return root;
     }
 
-    private void parseClosingTag() throws Exception
+    private boolean parseClosingTag() throws Exception
     {
+        if(currentToken.getType() != TokenType.CLOSING_TAG)
+            return false;
+
         //tutaj ifa na poczatek wrzucic, co jest w while
         readToken(TokenType.HTML_TEXT);
 
@@ -72,24 +96,33 @@ public class Parser {
 
         readToken(TokenType.TAG_CLOSING_MARK);
         readToken();
+
+        return true;
     }
 
-    private void parseText() throws Exception
+    private boolean parseText() throws Exception
     {
+        if(currentToken.getType() != TokenType.HTML_TEXT)
+            return false;
+
         StringBuilder textBuilder = new StringBuilder();
+        textBuilder.append(currentToken.getContent());
+        //lexer.setTextMode(true);
+        readToken();
+
         //mozna by miec metode w lekserze metode czytaj do napotkanego zadanego znaku
         while (currentToken.getType() == TokenType.HTML_TEXT)
         {
             textBuilder.append(currentToken.getContent());
             readToken(); //brakuje obslugi znakow z & "eskajpowanych" <- konwersja tego powinna byc w lekserze
 // ma byc zywy tekst, niezakodowany dla html'a
-            if(currentToken.getType() == TokenType.HTML_TEXT)
-                textBuilder.append(" ");
         }
 
         Text text = new Text(textBuilder.toString());
 
         elementsDeque.peek().addChild(text);
+
+        return true;
     }
 
     private void parseDOCTYPE() throws Exception //zwracanie boola czy udalo sie
@@ -97,6 +130,7 @@ public class Parser {
         if(currentToken.getType() != TokenType.DOCTYPE)
             throw new Exception(""); //przerzucenie odpowiedzialnosci za brak doctypu tu jest bledne, powinno to byc w parsowaniu calego dokumentu
 
+        lexer.setInsideTagMode(true);
         readToken(TokenType.HTML_TEXT);
 
         if(currentToken.getContent().toLowerCase().compareTo("doctype") != 0)
@@ -113,6 +147,7 @@ public class Parser {
         {
             readToken();
             root.addChild(new Tag("doctype"));
+            lexer.setInsideTagMode(false);
         }
         else if(currentToken.getType() == TokenType.HTML_TEXT)
         {
@@ -124,41 +159,43 @@ public class Parser {
             TokenType matchedTokenType = currentToken.getType();
             //lekser od html powinien miec metode do czytania tekstu, ktora pozwoli na czytanie tekstu z bialymi znakami
             //czesc wspolne kodu wydzielic do metody, ktora pozwoli na skipowanie
-            do {
-                readToken();
-            }while (currentToken.getType() != matchedTokenType);
+            lexer.setAttributeValueReadingMode(true);
 
             readToken();
 
+            readToken(matchedTokenType);
+
+            readToken();
             if(currentToken.getType() == TokenType.TAG_CLOSING_MARK)
             {
                 readToken();
                 root.addChild(new Tag("doctype"));
+                lexer.setInsideTagMode(false);
             }
             else if(currentToken.getType() == TokenType.QUOTE || currentToken.getType() == TokenType.SINGLE_QUOTE)
             {
                 matchedTokenType = currentToken.getType(); // wydzielic do tryParseNamespace i na koncu sprawdzic czy jest poczatek zamkniecia
 
-                do {
-                        readToken();
-                }while (currentToken.getType() != matchedTokenType);
-
+                lexer.setAttributeValueReadingMode(true);
                 readToken();
-
+                readToken(matchedTokenType);
+                readToken();
                 if(currentToken.getType() != TokenType.TAG_CLOSING_MARK)
                     throw new Exception();
 
                 root.addChild(new Tag("doctype"));
+                lexer.setInsideTagMode(false);
             }
         }
 
     }
 
-    private void parseOpeningTag() throws Exception
+    private boolean parseOpeningTag() throws Exception
     {
         if(currentToken.getType() != TokenType.TAG_OPENER)
-            return; // tutaj wrzucic false i obedzie sie bez ifa na zewnatrz przed wywolaneim
+            return false; // tutaj wrzucic false i obedzie sie bez ifa na zewnatrz przed wywolaneim
 
+        lexer.setInsideTagMode(true);
         readToken(TokenType.HTML_TEXT);
 
         String tagName = currentToken.getContent();
@@ -166,7 +203,13 @@ public class Parser {
         if(currentToken.getContent().toLowerCase().compareTo("script") == 0)
         {
             skipScript();
-            return;
+            return true;
+        }
+
+        if(currentToken.getContent().toLowerCase().compareTo("style") == 0)
+        {
+            skipStyle();
+            return true;
         }
 
         readToken();
@@ -182,6 +225,7 @@ public class Parser {
 
         if(currentToken.getType() == TokenType.TAG_CLOSING_MARK)
         {
+            lexer.setInsideTagMode(false);
             readToken();
 
             elementsDeque.peek().addChild(tag);
@@ -194,6 +238,7 @@ public class Parser {
 
         else if(currentToken.getType() == TokenType.EMPTY_CLOSING_TAG)
         {
+            lexer.setInsideTagMode(false);
             readToken();
 
             elementsDeque.peek().addChild(tag);
@@ -201,6 +246,10 @@ public class Parser {
         }
         else
             throw new Exception();
+
+        lexer.setInsideTagMode(false);
+
+        return true;
     }
 
     private ArrayList<Attribute> parseAttributes() throws Exception
@@ -210,8 +259,7 @@ public class Parser {
         while(currentToken.getType() == TokenType.HTML_TEXT)
         {
             String attributeName = currentToken.getContent();
-            ArrayList<String> values = new ArrayList<>();
-
+            String value = null;
             readToken();
 
             if(currentToken.getType() == TokenType.ASSIGN_OPERATOR)
@@ -220,21 +268,22 @@ public class Parser {
 
                 TokenType matchedType = currentToken.getType();
 
+                lexer.setAttributeValueReadingMode(true);
                 readToken();
 
-                while (currentToken.getType() != matchedType)
-                {
-                    values.add(currentToken.getContent());
-                    readToken();
-                }
+                value = currentToken.getContent();
+
+                readToken();
 
                 if(currentToken.getType() != matchedType)
+                    throw new Exception();
+                else if(currentToken.getType() == TokenType.ETX)
                     throw new Exception();
                 else
                     readToken();
             }
 
-            attributes.add(new Attribute(attributeName, values));
+            attributes.add(new Attribute(attributeName, value));
         }
 
         return attributes;
@@ -259,20 +308,49 @@ public class Parser {
 
     private void skipScript() throws Exception
     {
-        while (currentToken.getType() != TokenType.ETX &&
-        currentToken.getType() != TokenType.CLOSING_TAG)
+        while (currentToken.getType() != TokenType.CLOSING_TAG) {
+            readTokenUntilCharacters('<');
             readToken();
+        }
 
         if(currentToken.getType() == TokenType.ETX)
             throw new Exception();
 
         readToken(TokenType.HTML_TEXT);
+
+        if(currentToken.getContent().compareTo("script") == 0)
+        {
+            readToken(TokenType.TAG_CLOSING_MARK);
+            readToken();
+        }
+        else
+            skipScript();
+
+        lexer.setInsideTagMode(false);
+    }
+
+    private void skipStyle() throws Exception
+    {
+        readTokenUntilCharacters('<');
+
+        if(currentToken.getType() == TokenType.ETX)
+            throw new Exception();
+
+        readToken();
+        readToken(TokenType.HTML_TEXT);
         readToken(TokenType.TAG_CLOSING_MARK);
         readToken();
+        lexer.setInsideTagMode(false);
     }
 
     private void readToken() throws IOException, LexerException {
         currentToken = lexer.getNextToken();
+        if(currentToken != null && currentToken.getPosition() != null && currentToken.getPosition().getRow() == 2381)
+            System.out.println("Jestem tuuuu");
+    }
+
+    private void readTokenUntilCharacters(Character... characters) throws IOException {
+        currentToken = lexer.getHTMLTextToken(characters);
     }
 
     private void readToken(TokenType... tokenType) throws Exception {

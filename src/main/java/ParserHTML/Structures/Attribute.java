@@ -5,12 +5,12 @@ import java.util.Objects;
 
 public class Attribute {
     private String name;
-    private ArrayList<String> values;
+    private String value;
 
-    public Attribute(String name, ArrayList<String> values)
+    public Attribute(String name, String value)
     {
         this.name = name;
-        this.values = values;
+        this.value = value;
     }
 
     @Override
@@ -18,6 +18,6 @@ public class Attribute {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Attribute attribute = (Attribute) o;
-        return Objects.equals(name, attribute.name) && Objects.equals(values, attribute.values);
+        return Objects.equals(name, attribute.name) && Objects.equals(value, attribute.value);
     }
 }
