@@ -1,13 +1,11 @@
 
-import Lexer.HtmlLexer;
-import ParserHTML.Parser;
-import ParserHTML.Structures.Root;
-import Reader.Reader;
+import lexer.HtmlLexer;
+import parserhtml.Parser;
+import parserhtml.structures.Root;
+import reader.Reader;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.InputStreamReader;
-import java.net.URL;
 
 
 public class Main {

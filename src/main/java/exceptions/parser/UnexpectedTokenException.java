@@ -1,7 +1,7 @@
 package exceptions.parser;
 
-import Lexer.TokenType;
-import Reader.Position;
+import lexer.TokenType;
+import reader.Position;
 
 public class UnexpectedTokenException extends Exception{
 
