@@ -15,6 +15,11 @@ public class ChildPathElement extends PathElement{
         this.relativeCondition = relativeCondition;
     }
 
+    public RelativeCondition getRelativeCondition()
+    {
+        return relativeCondition;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

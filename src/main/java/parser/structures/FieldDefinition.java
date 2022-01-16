@@ -1,8 +1,11 @@
 package parser.structures;
 
+import visitor.resource.Visitable;
+import visitor.resource.Visitor;
+
 import java.util.Objects;
 
-public class FieldDefinition {
+public class FieldDefinition implements Visitable {
     private String fieldIdentifier;
     private PathToResource pathToResource;
     private String attributeOrResourceIdentifier;
@@ -36,6 +39,27 @@ public class FieldDefinition {
         this.isResource = isResource;
     }
 
+    public String getFieldIdentifier() {
+        return fieldIdentifier;
+    }
+
+    public boolean isExtractAsImage()
+    {
+        return extractAsImage;
+    }
+
+    public PathToResource getPathToResource() {
+        return pathToResource;
+    }
+
+    public String getAttributeOrResourceIdentifier() {
+        return attributeOrResourceIdentifier;
+    }
+
+    public boolean isResource() {
+        return isResource;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -44,4 +68,8 @@ public class FieldDefinition {
         return extractAsImage == that.extractAsImage && isResource == that.isResource && Objects.equals(fieldIdentifier, that.fieldIdentifier) && Objects.equals(pathToResource, that.pathToResource) && Objects.equals(attributeOrResourceIdentifier, that.attributeOrResourceIdentifier);
     }
 
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
+    }
 }

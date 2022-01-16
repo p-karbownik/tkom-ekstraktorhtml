@@ -1,12 +1,20 @@
 package parser.structures;
 
-public class ClassLine
+import visitor.resource.Visitable;
+import visitor.resource.Visitor;
+
+public class ClassLine implements Visitable
 {
     private String classIdentifier;
 
     public ClassLine(String classIdentifier)
     {
         this.classIdentifier = classIdentifier;
+    }
+
+    public String getClassIdentifier()
+    {
+        return classIdentifier;
     }
 
     @Override
@@ -17,4 +25,8 @@ public class ClassLine
         return classIdentifier.equals(classLine.classIdentifier);
     }
 
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
+    }
 }

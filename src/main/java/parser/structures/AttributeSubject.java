@@ -1,6 +1,12 @@
 package parser.structures;
 
 public class AttributeSubject extends Subject{
+
+    public AttributeSubject()
+    {
+        super(null);
+    }
+
     @Override
     public boolean equals(Object o)
     {

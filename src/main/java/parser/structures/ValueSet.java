@@ -4,11 +4,16 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class ValueSet {
-    ArrayList<String> values;
+    private ArrayList<String> values;
 
     public ValueSet(ArrayList<String> values)
     {
         this.values = values;
+    }
+
+    public ArrayList<String> getValues()
+    {
+        return values;
     }
 
     @Override

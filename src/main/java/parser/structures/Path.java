@@ -7,10 +7,20 @@ import java.util.Objects;
 
 public class Path {
 
-    private class PathNode
+    public static class PathNode
     {
-        PathElement pathElement;
-        PathNode next;
+        private PathElement pathElement;
+        private PathNode next;
+
+        public PathElement getPathElement()
+        {
+            return pathElement;
+        }
+
+        public PathNode getNext()
+        {
+            return next;
+        }
 
         @Override
         public boolean equals(Object o) {
@@ -23,6 +33,11 @@ public class Path {
     }
 
     private PathNode root;
+
+    public PathNode getRoot()
+    {
+        return root;
+    }
 
     public Path(TokenType tokenType) {
         //self
@@ -63,7 +78,9 @@ public class Path {
         for(PathElement e : elements)
         {
             current.pathElement = e;
-            current.next = previous;
+
+            if(previous != null)
+                previous.next = current;
 
             previous = current;
             current = new PathNode();

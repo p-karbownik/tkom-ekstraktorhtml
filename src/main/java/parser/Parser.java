@@ -7,6 +7,7 @@ import lexer.TokenType;
 import parser.structures.*;
 import exceptions.LexerException;
 import exceptions.parser.*;
+import reader.Position;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class Parser {
         this.lexer = lexer;
     }
 
-    public void parse() throws UnexpectedTokenException, IOException, LexerException, ResourceRedefinitionException, UndefinedResourceException {
+    public void parse() throws UnexpectedTokenException, IOException, LexerException, ResourceRedefinitionException, UndefinedResourceException, RangeException, FieldRedefinitionException {
         readToken();
 
         parsedResources = new HashMap<>();
@@ -30,7 +31,7 @@ public class Parser {
 
         while ((resource = parseResource()) != null) // dopoki sa resourcy
         {
-            if(parsedResources.containsKey(resource.getName()))
+            if (parsedResources.containsKey(resource.getName()))
                 throw new ResourceRedefinitionException(resource.getName());
             else
                 parsedResources.put(resource.getName(), resource); // sprawdzic czy nie ma metody, ktora sprawdza czy dany klucz juz sie znajduje
@@ -39,12 +40,11 @@ public class Parser {
         }
     }
 
-    public HashMap<String, Resource> getParsedResources()
-    {
+    public HashMap<String, Resource> getParsedResources() {
         return parsedResources;
     }
 
-    public Resource parseResource() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException {
+    public Resource parseResource() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException, RangeException, FieldRedefinitionException {
         if (!isTypeOf(TokenType.RESOURCE))
             return null;
 
@@ -55,13 +55,13 @@ public class Parser {
         readToken();
         DefinitionBlock definitionBlock = parseDefinitionBlock();
 
-        if(definitionBlock == null)
+        if (definitionBlock == null)
             throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.LEFT_BRACE); // przypadek gdy
 
         return new Resource(identifier, definitionBlock);
     }
 
-    private DefinitionBlock parseDefinitionBlock() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException {
+    private DefinitionBlock parseDefinitionBlock() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException, RangeException, FieldRedefinitionException {
         if (!isTypeOf(TokenType.LEFT_BRACE))
             return null;
 
@@ -69,7 +69,7 @@ public class Parser {
 
         TagSentence tagSentence = parseTagSentence();
 
-        if(tagSentence == null)
+        if (tagSentence == null)
             throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.TAG);
 
         readToken();
@@ -81,28 +81,28 @@ public class Parser {
             conditionsBlock = parseConditionsBlock();
 
             //sprawdzenie czy conditionsBlock istnieje
-            if(conditionsBlock == null)
+            if (conditionsBlock == null)
                 throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.LEFT_BRACE);
         }
 
         ClassLine classLine = parseClassLine();
 
-        if(classLine == null)
+        if (classLine == null)
             throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.EXPORT);
 
         parseSetFields();
 
         FieldDefinitionBlock fieldsDefinitionBlock = parseFieldDefinitionBlock();
 
-        if(fieldsDefinitionBlock == null)
+        if (fieldsDefinitionBlock == null)
             throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.LEFT_BRACE);
 
         QuantitativeConstraintSentence quantitativeConstraintSentence = parseAmountSentence();
 
-        if(quantitativeConstraintSentence == null) {
+        if (quantitativeConstraintSentence == null) {
             quantitativeConstraintSentence = parseRangeSentence();
 
-            if(quantitativeConstraintSentence == null)
+            if (quantitativeConstraintSentence == null)
                 throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.AMOUNT, TokenType.RANGE);
         }
 
@@ -112,7 +112,7 @@ public class Parser {
     }
 
     private TagSentence parseTagSentence() throws UnexpectedTokenException, IOException, LexerException {
-        if(!isTypeOf(TokenType.TAG)) // to w mozna wydzielic do metody typu isTypeOf
+        if (!isTypeOf(TokenType.TAG)) // to w mozna wydzielic do metody typu isTypeOf
             return null;
 
         readToken(TokenType.ASSIGN_OPERATOR);
@@ -233,7 +233,7 @@ public class Parser {
         } else {
             Subject subject = parseSubject();
 
-            if(subject == null)
+            if (subject == null)
                 throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.CLASS, TokenType.ATTRIBUTE);
 
             mustBe(TokenType.IDENTIFIER);
@@ -243,16 +243,37 @@ public class Parser {
 
             readToken();
 
-            ComparisonOperator comparisonOperator = parseComparisonOperator();
+            ComparisonObject comparisonObject = parseComparisonObject();
 
-            if (comparisonOperator != null) {
-                ValueSet valueSet = parseValueSet();
-
-                return new FactorObject(isNegated, subject, comparisonOperator, valueSet);
+            if (comparisonObject != null) {
+                return new FactorObject(isNegated, subject, comparisonObject);
             }
 
             return new FactorObject(isNegated, subject);
         }
+    }
+
+    private ComparisonObject parseComparisonObject() throws IOException, LexerException, UnexpectedTokenException {
+        if (!isTypeOf(TokenType.IN) && !isTypeOf(TokenType.NOT_EQUAL) && !isTypeOf(TokenType.EQUAL))
+            return null;
+
+        if(isTypeOf(TokenType.IN))
+        {
+            readToken();
+
+            ValueSet valueSet = parseValueSet();
+
+            return new ComparisonObject(valueSet);
+        }
+
+        ComparisonOperator comparisonOperator = parseComparisonOperator();
+
+        mustBe(TokenType.STRING);
+
+        String value = currentToken.getContent();
+        readToken();
+
+        return new ComparisonObject(comparisonOperator, value);
     }
 
     private Subject parseSubject() throws IOException, LexerException {
@@ -269,24 +290,20 @@ public class Parser {
     private ValueSet parseValueSet() throws UnexpectedTokenException, IOException, LexerException {
         ArrayList<String> values = new ArrayList<>();
 
-        mustBe(TokenType.LEFT_BRACE, TokenType.STRING);
+        mustBe(TokenType.LEFT_BRACE);
 
-        if (isTypeOf(TokenType.STRING)) {
+        readToken(TokenType.STRING);
+
+        while (isTypeOf(TokenType.STRING)) {
             values.add(currentToken.getContent());
-        } else {
-            readToken(TokenType.STRING);
-
-            while (isTypeOf(TokenType.STRING)) {
-                values.add(currentToken.getContent());
-                readToken();
-
-                if (isTypeOf(TokenType.COMMA))
-                    readToken(TokenType.STRING);
-            }
-
-            mustBe(TokenType.RIGHT_BRACE);
             readToken();
+
+            if (isTypeOf(TokenType.COMMA))
+                readToken(TokenType.STRING);
         }
+
+        mustBe(TokenType.RIGHT_BRACE);
+        readToken();
 
         return new ValueSet(values);
     }
@@ -378,7 +395,7 @@ public class Parser {
         readToken(TokenType.TO);
         readToken(TokenType.CLASS);
         readToken(TokenType.ASSIGN_OPERATOR);
-        readToken(TokenType.IDENTIFIER);
+        readToken(TokenType.STRING);
 
         String classIdentifier = currentToken.getContent();
 
@@ -389,36 +406,41 @@ public class Parser {
         return new ClassLine(classIdentifier);
     }
 
-    private FieldDefinitionBlock parseFieldDefinitionBlock() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException {
+    private FieldDefinitionBlock parseFieldDefinitionBlock() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException, RangeException, FieldRedefinitionException {
         if (!isTypeOf(TokenType.LEFT_BRACE))
             return null;
 
         readToken();
 
-        ArrayList<FieldDefinition> fieldDefinitionArrayList = new ArrayList<>();
+        HashMap<String, FieldDefinition> fieldDefinitions = new HashMap<>();
 
         FieldDefinition fieldDefinition = parseFieldDefinition();
 
         if (fieldDefinition == null)
             throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.FIELD);
 
-        fieldDefinitionArrayList.add(fieldDefinition);
+        fieldDefinitions.put(fieldDefinition.getFieldIdentifier(), fieldDefinition);
 
         do {
+            Position position = currentToken.getPosition();
             fieldDefinition = parseFieldDefinition();
 
-            if (fieldDefinition != null)
-                fieldDefinitionArrayList.add(fieldDefinition);
+            if (fieldDefinition != null) {
+                if(fieldDefinitions.containsKey(fieldDefinition.getFieldIdentifier()))
+                    throw new FieldRedefinitionException(fieldDefinition.getFieldIdentifier(), position);
+
+                fieldDefinitions.put(fieldDefinition.getFieldIdentifier(), fieldDefinition);
+            }
 
         } while (fieldDefinition != null);
 
         mustBe(TokenType.RIGHT_BRACE);
         readToken();
 
-        return new FieldDefinitionBlock(fieldDefinitionArrayList);
+        return new FieldDefinitionBlock(new ArrayList<>(fieldDefinitions.values()));
     }
 
-    private FieldDefinition parseFieldDefinition() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException {
+    private FieldDefinition parseFieldDefinition() throws UnexpectedTokenException, IOException, LexerException, UndefinedResourceException, RangeException {
         if (!isTypeOf(TokenType.FIELD))
             return null;
 
@@ -455,21 +477,18 @@ public class Parser {
                     readToken();
 
                     return new FieldDefinition(fieldIdentifier, pathToResource, attributeIdentifier, false);
-                }
-                else if (isTypeOf(TokenType.DOT)) {
+                } else if (isTypeOf(TokenType.DOT)) {
                     readToken(TokenType.ASIMG);
                     readToken(TokenType.SEMI_COLON);
                     readToken();
-                    return new FieldDefinition(fieldIdentifier, pathToResource, attributeIdentifier, false,true);
+                    return new FieldDefinition(fieldIdentifier, pathToResource, attributeIdentifier, false, true);
                 }
-            }
-            else if(isTypeOf(TokenType.RESOURCE))
-            {
+            } else if (isTypeOf(TokenType.RESOURCE)) {
                 readToken(TokenType.LEFT_SQUARE_BRACKET);
                 readToken(TokenType.IDENTIFIER);
                 String resourceIdentifier = currentToken.getContent();
 
-                if(!parsedResources.containsKey(resourceIdentifier))
+                if (!parsedResources.containsKey(resourceIdentifier))
                     throw new UndefinedResourceException(resourceIdentifier);
 
                 readToken(TokenType.RIGHT_SQUARE_BRACKET);
@@ -483,7 +502,7 @@ public class Parser {
         return null;
     }
 
-    private PathToResource parsePathToResource() throws UnexpectedTokenException, IOException, LexerException {
+    private PathToResource parsePathToResource() throws UnexpectedTokenException, IOException, LexerException, RangeException {
         if (!isTypeOf(TokenType.FROM))
             return null;
 
@@ -521,7 +540,7 @@ public class Parser {
         return new PathToResource(pathElements);
     }
 
-    private TagPathElement parseTagPathElement() throws UnexpectedTokenException, IOException, LexerException {
+    private TagPathElement parseTagPathElement() throws UnexpectedTokenException, IOException, LexerException{
         if (!isTypeOf(TokenType.TAG))
             return null;
 
@@ -534,7 +553,7 @@ public class Parser {
 
         readToken();
 
-        int number = -1;
+        int number = 0;
 
         if (isTypeOf(TokenType.LEFT_SQUARE_BRACKET)) {
             readToken(TokenType.NUMBER);
@@ -547,7 +566,7 @@ public class Parser {
 
         return new TagPathElement(identifierContent, number);
     }
-    // do robic konstrukcje typy range -> wyty
+
     private AmountSentence parseAmountSentence() throws UnexpectedTokenException, IOException, LexerException {
         if (!isTypeOf(TokenType.AMOUNT))
             return null;
@@ -573,24 +592,28 @@ public class Parser {
 
     }
 
-    private RangeSentence parseRangeSentence() throws UnexpectedTokenException, IOException, LexerException {
-        if(!isTypeOf(TokenType.RANGE))
+    private RangeSentence parseRangeSentence() throws UnexpectedTokenException, IOException, LexerException, RangeException {
+        if (!isTypeOf(TokenType.RANGE))
             return null;
 
         readToken(TokenType.ASSIGN_OPERATOR);
         readToken(TokenType.LEFT_ROUND_BRACKET);
         readToken(TokenType.NUMBER);
 
-        int from = ((Number) currentToken).getValue();
+        Number from = (Number) currentToken;
 
         readToken(TokenType.COMMA);
         readToken(TokenType.NUMBER);
 
-        int to = ((Number) currentToken).getValue();
+        Number to = (Number) currentToken;
+
         readToken(TokenType.RIGHT_ROUND_BRACKET);
         readToken(TokenType.SEMI_COLON);
 
-        return new RangeSentence(from, to);
+        if(from.getValue() > to.getValue())
+            throw new RangeException(from, to);
+
+        return new RangeSentence(from.getValue(), to.getValue());
     }
 
     private void readToken() throws IOException, LexerException {
@@ -615,8 +638,7 @@ public class Parser {
             throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), expectedTokens);
     }
 
-    private boolean isTypeOf(TokenType expectedTokenType)
-    {
+    private boolean isTypeOf(TokenType expectedTokenType) {
         return currentToken.getType() == expectedTokenType;
     }
 
@@ -640,51 +662,54 @@ public class Parser {
         return parseAmountSentence();
     }
 
-    TagPathElement parseTagPathElementForTest() throws Exception{
+    TagPathElement parseTagPathElementForTest() throws Exception {
         readToken();
         return parseTagPathElement();
     }
 
-    RangeSentence parseRangeSentenceForTest() throws Exception{
+    RangeSentence parseRangeSentenceForTest() throws Exception {
         readToken();
         return parseRangeSentence();
     }
 
-    PathToResource parsePathToResourceForTest() throws Exception{
+    PathToResource parsePathToResourceForTest() throws Exception {
         readToken();
         return parsePathToResource();
     }
 
-    FieldDefinition parseFieldDefinitionForTest() throws Exception{
+    FieldDefinition parseFieldDefinitionForTest() throws Exception {
         readToken();
         return parseFieldDefinition();
     }
 
-    ComparisonOperator parseComparisonOperatorForTest() throws Exception{
+    ComparisonOperator parseComparisonOperatorForTest() throws Exception {
         readToken();
         return parseComparisonOperator();
     }
 
-    Subject parseSubjectForTest() throws Exception{
+    Subject parseSubjectForTest() throws Exception {
         readToken();
         return parseSubject();
     }
 
-    ValueSet parseValueSetForTest() throws Exception{
+    ValueSet parseValueSetForTest() throws Exception {
         readToken();
         return parseValueSet();
     }
 
-    Path parsePathForTest() throws Exception
-    {
+    Path parsePathForTest() throws Exception {
         readToken();
         return parsePath();
     }
 
-    ConditionSentence parseConditionSentenceForTest() throws Exception
-    {
+    ConditionSentence parseConditionSentenceForTest() throws Exception {
         readToken();
         return parseConditionSentence();
+    }
+
+    ComparisonObject parseComparisonObjectForTest() throws Exception {
+        readToken();
+        return parseComparisonObject();
     }
 
 }

@@ -1,5 +1,9 @@
 package parserhtml.structures;
 
 public interface Element {
-    public void addChild(Element e);
+    void addChild(Element e);
+
+    Element getParent();
+
+    void setParent(Element e);
 }

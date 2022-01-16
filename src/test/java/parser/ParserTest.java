@@ -323,7 +323,7 @@ public class ParserTest {
     @DisplayName("Test parsowania ValueSet nr 1")
     public void testParseValueSet1() throws Exception
     {
-        Lexer lexer = getLexer("\"cosik\"");
+        Lexer lexer = getLexer("{\"cosik\"}");
         Parser parser = new Parser(lexer);
 
         ValueSet parsedValueSet = parser.parseValueSetForTest();
@@ -435,7 +435,7 @@ public class ParserTest {
     @Test
     public void testParseConditionSentence() throws Exception
     {
-        Lexer lexer = getLexer("if (self has not attribute src and parent has tag a) or self has class rtg != { \"cosik1\", \"cosik2\" };");
+        Lexer lexer = getLexer("if (self has not attribute src and parent has tag a) or self has class rtg in { \"cosik1\", \"cosik2\" };");
         Parser parser = new Parser(lexer);
         ConditionSentence parsedConditionSentence = parser.parseConditionSentenceForTest();
 
@@ -459,11 +459,11 @@ public class ParserTest {
         valuesOfFactor3.add("cosik2");
 
         ValueSet valueSetOfFactor3 = new ValueSet(valuesOfFactor3);
-
+        ComparisonObject comparisonObject = new ComparisonObject(valueSetOfFactor3);
         ClassSubject classSubjectFactor3 = new ClassSubject();
         classSubjectFactor3.setIdentifier("rtg");
 
-        Factor factor3 = new Factor(new Path(TokenType.SELF), new FactorObject(false, classSubjectFactor3, new ComparisonOperator(TokenType.NOT_EQUAL), valueSetOfFactor3));
+        Factor factor3 = new Factor(new Path(TokenType.SELF), new FactorObject(false, classSubjectFactor3, comparisonObject));
 
         //Term 1
         ArrayList<Factor> factorsOfTerm1 = new ArrayList<>();
@@ -477,7 +477,6 @@ public class ParserTest {
         Factor factor4 = new Factor(condition1);
         ArrayList<Factor> factorsOfTerm2 = new ArrayList<>();
         factorsOfTerm2.add(factor4);
-        //factorsOfTerm2.add(factor3);
         Term term2 = new Term(factorsOfTerm2);
 
         ArrayList<Factor> factorsOfTerm3 = new ArrayList<>();
@@ -621,5 +620,41 @@ public class ParserTest {
 
         Resource parsedRessResource = parsedResources.get("ress");
         assertEquals(expectedRessResource, parsedRessResource);
+    }
+
+    @Test
+    public void testParseComparisonObject1() throws Exception
+    {
+        Lexer lexer = getLexer("== \"cosik\"");
+        Parser parser = new Parser(lexer);
+        ComparisonObject comparisonObject = parser.parseComparisonObjectForTest();
+        ComparisonObject expectedComparisonObject = new ComparisonObject(new ComparisonOperator(TokenType.EQUAL), "cosik");
+
+        assertEquals(expectedComparisonObject, comparisonObject);
+    }
+
+    @Test
+    public void testParseComparisonObject2() throws Exception
+    {
+        Lexer lexer = getLexer("!= \"cosik\"");
+        Parser parser = new Parser(lexer);
+        ComparisonObject comparisonObject = parser.parseComparisonObjectForTest();
+        ComparisonObject expectedComparisonObject = new ComparisonObject(new ComparisonOperator(TokenType.NOT_EQUAL), "cosik");
+
+        assertEquals(expectedComparisonObject, comparisonObject);
+    }
+
+    @Test
+    public void testParseComparisonObject3() throws Exception
+    {
+        Lexer lexer = getLexer("in {\"cosik\"}");
+        Parser parser = new Parser(lexer);
+        ArrayList<String> values = new ArrayList<>();
+        values.add("cosik");
+        ValueSet valueSet = new ValueSet(values);
+        ComparisonObject comparisonObject = parser.parseComparisonObjectForTest();
+        ComparisonObject expectedComparisonObject = new ComparisonObject(valueSet);
+
+        assertEquals(expectedComparisonObject, comparisonObject);
     }
 }

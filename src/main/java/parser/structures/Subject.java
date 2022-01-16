@@ -5,6 +5,10 @@ import java.util.Objects;
 public class Subject {
     protected String identifier = "";
 
+    Subject(String identifier)
+    {
+        this.identifier = identifier;
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -16,5 +20,10 @@ public class Subject {
     public void setIdentifier(String identifier)
     {
         this.identifier = identifier;
+    }
+
+    public String getIdentifier()
+    {
+        return identifier;
     }
 }

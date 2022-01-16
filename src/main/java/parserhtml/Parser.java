@@ -55,6 +55,8 @@ public class Parser {
 
         if(elementsDeque.size() != 0)
             throw new Exception();
+
+        setParent(root);
     }
 
     public Root getRoot()
@@ -312,11 +314,8 @@ public class Parser {
         lexer.setInsideTagMode(false);
     }
 
-
     private void readToken() throws IOException, LexerException {
         currentToken = lexer.getNextToken();
-        if(currentToken != null && currentToken.getPosition() != null && currentToken.getPosition().getRow() == 2381)
-            System.out.println("Jestem tuuuu");
     }
 
     private void readTokenUntilCharacters(Character... characters) throws IOException {
@@ -336,6 +335,30 @@ public class Parser {
 
         if(throwException)
             throw new Exception("");
+    }
+
+    private void setParent(Element root)
+    {
+        if(root instanceof Root)
+        {
+            for(Element e : ((Root) root).getChildren())
+            {
+                e.setParent(root);
+
+                if(e instanceof Tag)
+                    setParent(e);
+            }
+        }
+        else if(root instanceof Tag)
+        {
+            for(Element e : ((Tag) root).getChildren())
+            {
+                e.setParent(root);
+
+                if(e instanceof Tag)
+                    setParent(e);
+            }
+        }
     }
 
     private void buildVoidTagsHashMap()

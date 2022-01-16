@@ -1,6 +1,8 @@
 package parser.structures;
 
-public class RangeSentence implements QuantitativeConstraintSentence{
+import visitor.resource.Visitor;
+
+public class RangeSentence extends QuantitativeConstraintSentence{
     private int from;
     private int to;
 
@@ -8,6 +10,14 @@ public class RangeSentence implements QuantitativeConstraintSentence{
     {
         this.from = from;
         this.to = to;
+    }
+
+    public int getFrom() {
+        return from;
+    }
+
+    public int getTo() {
+        return to;
     }
 
     @Override
@@ -18,4 +28,8 @@ public class RangeSentence implements QuantitativeConstraintSentence{
         return from == that.from && to == that.to;
     }
 
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
+    }
 }

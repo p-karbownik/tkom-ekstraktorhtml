@@ -1,9 +1,12 @@
 package parserhtml.structures;
 
+import visitor.html.Visitable;
+import visitor.html.Visitor;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class Root implements Element{
+public class Root implements Element, Visitable {
     private ArrayList<Element> children;
 
     public Root()
@@ -16,6 +19,10 @@ public class Root implements Element{
         children.add(e);
     }
 
+    public ArrayList<Element> getChildren() {
+        return children;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -24,4 +31,17 @@ public class Root implements Element{
         return Objects.equals(children, root.children);
     }
 
+    @Override
+    public Object accept(Visitor visitor) throws Exception {
+        return visitor.visit(this);
+    }
+
+    public Element getParent()
+    {
+        return null;
+    }
+
+    @Override
+    public void setParent(Element e) {
+    }
 }

@@ -3,10 +3,9 @@ package parser.structures;
 import java.util.Objects;
 
 public class TagSubject extends Subject{
-    private String identifier;
 
     public TagSubject(String identifier){
-        this.identifier = identifier;
+        super(identifier);
     }
 
     @Override

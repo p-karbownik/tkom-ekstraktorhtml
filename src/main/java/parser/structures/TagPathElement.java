@@ -9,7 +9,7 @@ public class TagPathElement extends PathElement{
     public TagPathElement(String identifier)
     {
         this.identifier = identifier;
-        number = -1;
+        number = 0;
     }
     public TagPathElement(String identifier, int number)
     {
@@ -25,11 +25,6 @@ public class TagPathElement extends PathElement{
     public int getNumber()
     {
         return number;
-    }
-
-    public boolean isDefaultValue()
-    {
-        return number == -1;
     }
 
     @Override

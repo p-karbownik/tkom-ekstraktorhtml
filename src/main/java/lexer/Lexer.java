@@ -109,7 +109,7 @@ public class Lexer {
 
     private Token buildIdentifierOrKeywordToken(Position tokenBeginPosition) throws IOException {
 
-        if (!(Character.isLetter(reader.getCurrentCharacter()) || reader.getCurrentCharacter() == '_'))
+        if (!(Character.isLetter(reader.getCurrentCharacter()) || reader.getCurrentCharacter() == '_' || reader.getCurrentCharacter() == '$'))
             return null;
 
         StringBuilder content = new StringBuilder();
@@ -118,7 +118,8 @@ public class Lexer {
                 || reader.getCurrentCharacter() == '_'
                 || reader.getCurrentCharacter() == '$'
                 || reader.getCurrentCharacter() == '!'
-                || reader.getCurrentCharacter() == '-'){
+                || reader.getCurrentCharacter() == '-'
+                || reader.getCurrentCharacter() == '&'){
             content.append(reader.getCurrentCharacter());
             reader.readCharacter();
         }
@@ -183,6 +184,7 @@ public class Lexer {
 
         keyWords.put("not", TokenType.NOT);
         keyWords.put("field", TokenType.FIELD);
+        keyWords.put("in", TokenType.IN);
     }
 
     private void initialiseOperators() {

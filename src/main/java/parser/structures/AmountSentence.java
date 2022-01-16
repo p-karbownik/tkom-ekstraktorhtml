@@ -1,6 +1,8 @@
 package parser.structures;
 
-public class AmountSentence implements QuantitativeConstraintSentence
+import visitor.resource.Visitor;
+
+public class AmountSentence extends QuantitativeConstraintSentence
 {
     private final int amount;
     private boolean isAmountEqualEvery = false;
@@ -26,5 +28,10 @@ public class AmountSentence implements QuantitativeConstraintSentence
         if (o == null || getClass() != o.getClass()) return false;
         AmountSentence that = (AmountSentence) o;
         return amount == that.amount && isAmountEqualEvery == that.isAmountEqualEvery;
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

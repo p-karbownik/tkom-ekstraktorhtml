@@ -18,4 +18,8 @@ public class RelativeCondition {
         return Objects.equals(condition, that.condition);
     }
 
+    public Condition getCondition()
+    {
+        return condition;
+    }
 }
