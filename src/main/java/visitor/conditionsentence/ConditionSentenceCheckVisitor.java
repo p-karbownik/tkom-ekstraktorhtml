@@ -7,7 +7,6 @@ import parserhtml.structures.Root;
 import parserhtml.structures.Tag;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class ConditionSentenceCheckVisitor implements Visitor {
     private Element htmlRoot;
@@ -153,14 +152,13 @@ public class ConditionSentenceCheckVisitor implements Visitor {
 
         }
 
-        // sprawdzanie warunkow we zbiorze
 
         for (Tag tag : resultTagsArray) {
             if (checkFactorObject(tag, factorObject))
                 return true;
         }
 
-        return false;//<- ogolnie ta czesc nalezy wydzielic do osobnej funkcji (najlepiej tak zrobic)
+        return false;
     }
 
     @Override
@@ -174,20 +172,7 @@ public class ConditionSentenceCheckVisitor implements Visitor {
         if (subject instanceof TagSubject)
             return factorObject.isNegated() ? !(tag.getName().compareTo(subject.getIdentifier()) == 0) : (tag.getName().compareTo(subject.getIdentifier()) == 0);
 
-        else if (subject instanceof ClassSubject) {
-            Attribute classAttribute = null;
-
-            for (Attribute attribute : tag.getAttributes())
-                if (attribute.getName().compareTo("class") == 0) {
-                    classAttribute = attribute;
-                    break;
-                }
-
-            if (classAttribute == null)
-                return false;
-
-            return factorObject.isNegated() ? !(classAttribute.getValue().compareTo(subject.getIdentifier()) == 0) : (classAttribute.getValue().compareTo(subject.getIdentifier()) == 0) ;
-        } else {
+        else {
             for (Attribute attribute : tag.getAttributes()) {
                 if (attribute.getName().compareTo(subject.getIdentifier()) == 0) {
 

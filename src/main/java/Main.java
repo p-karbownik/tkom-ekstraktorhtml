@@ -1,10 +1,16 @@
+import example.ImageClass;
 import extractor.Extractor;
 import lexer.HtmlLexer;
 import lexer.Lexer;
 import parserhtml.structures.Root;
 import reader.Reader;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
@@ -20,10 +26,8 @@ public class Main {
         parser.Parser resParser = new parser.Parser(new Lexer(new Reader(new BufferedReader(new FileReader(args[1])))));
         resParser.parse();
 
-        System.out.println(example.Meta.class.getCanonicalName());
-
         Extractor extractor = new Extractor(resParser.getParsedResources(), root);
-        extractor.extract("ress");
+        extractor.extract("liRes3");
 
         ArrayList<Object> objects = extractor.getExtractedObjects();
 
@@ -31,5 +35,7 @@ public class Main {
         {
             System.out.println(o.toString());
         }
+
+
     }
 }

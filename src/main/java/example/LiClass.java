@@ -1,14 +1,12 @@
 package example;
 
 public class LiClass {
-    private String style;
-    private AClass aClass;
+    private String text;
 
     @Override
     public String toString() {
         return "LiClass{" +
-                "style='" + style + '\'' +
-                ", aClass=" + aClass +
+                "text='" + text + '\'' +
                 '}';
     }
 }

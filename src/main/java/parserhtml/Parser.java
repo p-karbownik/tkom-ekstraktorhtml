@@ -1,6 +1,10 @@
 package parserhtml;
 
-import exceptions.LexerException;
+import exceptions.lexer.LexerException;
+import exceptions.parser.DoctypeException;
+import exceptions.parser.ElementsDequeException;
+import exceptions.parser.TagClosingException;
+import exceptions.parser.UnexpectedTokenException;
 import lexer.HtmlLexer;
 import lexer.Token;
 import lexer.TokenType;
@@ -22,13 +26,14 @@ public class Parser {
         buildVoidTagsHashMap();
     }
 
-    public void parse() throws Exception
-    {
+    public void parse() throws DoctypeException, UnexpectedTokenException, IOException, LexerException, TagClosingException, ElementsDequeException {
         readToken();
-        root = new Root(); // nie ma sensu tworzyc obiekty, gdy nie mamy jego wewnetrznych danych, obiekt powinien byc utworzony na koncu
+        root = new Root();
         elementsDeque = new ArrayDeque<>();
         elementsDeque.push(root);
-        parseDOCTYPE();
+
+        if(!parseDOCTYPE())
+            throw new DoctypeException(currentToken.getPosition());
 
         boolean result = true;
 
@@ -48,13 +53,15 @@ public class Parser {
                 result = parseClosingTag();
             if(!result)
                 result = parseText();
+            if(!result && currentToken.getType() != TokenType.ETX)
+                throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition());
 
         }
-        //skonczylismy parsowanie tego co sie da => sprawdzamy czy jest etx
+
         elementsDeque.pop(); // wyrzucenie korzenia z kolejki
 
         if(elementsDeque.size() != 0)
-            throw new Exception();
+            throw new ElementsDequeException(elementsDeque.size() - 1);
 
         setParent(root);
     }
@@ -64,19 +71,17 @@ public class Parser {
         return root;
     }
 
-    private boolean parseClosingTag() throws Exception
-    {
+    private boolean parseClosingTag() throws UnexpectedTokenException, IOException, LexerException, TagClosingException {
         if(currentToken.getType() != TokenType.CLOSING_TAG)
             return false;
 
-        //tutaj ifa na poczatek wrzucic, co jest w while
         readToken(TokenType.HTML_TEXT);
 
-        String parseTagName = currentToken.getContent();
+        String parsedTagName = currentToken.getContent();
         Tag tagFromDequeue = (Tag) elementsDeque.pop();
-        // moga byc problemy ze kolejnosc jest odwrocona
-        if(!Objects.equals(tagFromDequeue.getName(), parseTagName))
-            throw new Exception(); //
+
+        if(!Objects.equals(tagFromDequeue.getName(), parsedTagName))
+            throw new TagClosingException(tagFromDequeue.getName(), parsedTagName, currentToken.getPosition());
         else
             tagFromDequeue.close();
 
@@ -86,8 +91,7 @@ public class Parser {
         return true;
     }
 
-    private boolean parseText() throws Exception
-    {
+    private boolean parseText() throws IOException, LexerException {
         if(currentToken.getType() != TokenType.HTML_TEXT)
             return false;
 
@@ -96,12 +100,10 @@ public class Parser {
 
         readToken();
 
-        //mozna by miec metode w lekserze metode czytaj do napotkanego zadanego znaku
         while (currentToken.getType() == TokenType.HTML_TEXT)
         {
             textBuilder.append(currentToken.getContent());
-            readToken(); //brakuje obslugi znakow z & "eskajpowanych" <- konwersja tego powinna byc w lekserze
-// ma byc zywy tekst, niezakodowany dla html'a
+            readToken();
         }
 
         Text text = new Text(textBuilder.toString());
@@ -111,21 +113,20 @@ public class Parser {
         return true;
     }
 
-    private void parseDOCTYPE() throws Exception //zwracanie boola czy udalo sie
-    {
+    private boolean parseDOCTYPE() throws UnexpectedTokenException, IOException, LexerException {
         if(currentToken.getType() != TokenType.DOCTYPE)
-            throw new Exception(""); //przerzucenie odpowiedzialnosci za brak doctypu tu jest bledne, powinno to byc w parsowaniu calego dokumentu
+            return false;
 
         lexer.setInsideTagMode(true);
         readToken(TokenType.HTML_TEXT);
 
         if(currentToken.getContent().toLowerCase().compareTo("doctype") != 0)
-            throw new Exception(); //ok
+            return false; //ok
 
         readToken(TokenType.HTML_TEXT);
 
         if(currentToken.getContent().toLowerCase().compareTo("html") != 0)
-            throw new Exception(); //ok
+            return false; //ok
 
         readToken();
 
@@ -138,13 +139,12 @@ public class Parser {
         else if(currentToken.getType() == TokenType.HTML_TEXT)
         {
             if(currentToken.getContent().toUpperCase().compareTo("PUBLIC") != 0)
-                throw new Exception();
+                return false;
 
             readToken(TokenType.QUOTE, TokenType.SINGLE_QUOTE);
 
             TokenType matchedTokenType = currentToken.getType();
-            //lekser od html powinien miec metode do czytania tekstu, ktora pozwoli na czytanie tekstu z bialymi znakami
-            //czesc wspolne kodu wydzielic do metody, ktora pozwoli na skipowanie
+
             lexer.setAttributeValueReadingMode(true);
 
             readToken();
@@ -160,26 +160,26 @@ public class Parser {
             }
             else if(currentToken.getType() == TokenType.QUOTE || currentToken.getType() == TokenType.SINGLE_QUOTE)
             {
-                matchedTokenType = currentToken.getType(); // wydzielic do tryParseNamespace i na koncu sprawdzic czy jest poczatek zamkniecia
+                matchedTokenType = currentToken.getType();
 
                 lexer.setAttributeValueReadingMode(true);
                 readToken();
                 readToken(matchedTokenType);
                 readToken();
                 if(currentToken.getType() != TokenType.TAG_CLOSING_MARK)
-                    throw new Exception();
+                    return false;
 
                 root.addChild(new Tag("doctype"));
                 lexer.setInsideTagMode(false);
             }
         }
 
+        return true;
     }
 
-    private boolean parseOpeningTag() throws Exception
-    {
+    private boolean parseOpeningTag() throws UnexpectedTokenException, IOException, LexerException {
         if(currentToken.getType() != TokenType.TAG_OPENER)
-            return false; // tutaj wrzucic false i obedzie sie bez ifa na zewnatrz przed wywolaneim
+            return false;
 
         lexer.setInsideTagMode(true);
         readToken(TokenType.HTML_TEXT);
@@ -204,8 +204,6 @@ public class Parser {
 
         Tag tag = new Tag(tagName, attributes);
 
-        //powinno byc rekursywne wywolanie parsowania kontentu
-        //to podejscie co mam, traci informacje o tym co moze byc dalej
         if(voidTags.containsKey(tagName))
             tag.close();
 
@@ -231,15 +229,14 @@ public class Parser {
             tag.close();
         }
         else
-            throw new Exception();
+            throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.EMPTY_CLOSING_TAG, TokenType.TAG_CLOSING_MARK);
 
         lexer.setInsideTagMode(false);
 
         return true;
     }
 
-    private ArrayList<Attribute> parseAttributes() throws Exception
-    {
+    private ArrayList<Attribute> parseAttributes() throws IOException, LexerException, UnexpectedTokenException {
         ArrayList<Attribute> attributes = new ArrayList<>();
 
         while(currentToken.getType() == TokenType.HTML_TEXT)
@@ -262,9 +259,9 @@ public class Parser {
                 readToken();
 
                 if(currentToken.getType() != matchedType)
-                    throw new Exception();
+                    throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), matchedType);
                 else if(currentToken.getType() == TokenType.ETX)
-                    throw new Exception();
+                    throw new UnexpectedTokenException(TokenType.ETX, currentToken.getPosition());
                 else
                     readToken();
             }
@@ -275,15 +272,14 @@ public class Parser {
         return attributes;
     }
 
-    private void skipScript() throws Exception
-    {
-        while (currentToken.getType() != TokenType.CLOSING_TAG) {
+    private void skipScript() throws UnexpectedTokenException, IOException, LexerException {
+        while (currentToken.getType() != TokenType.CLOSING_TAG && currentToken.getType() != TokenType.ETX) {
             readTokenUntilCharacters('<');
             readToken();
         }
 
         if(currentToken.getType() == TokenType.ETX)
-            throw new Exception();
+            throw new UnexpectedTokenException(TokenType.ETX, currentToken.getPosition());
 
         readToken(TokenType.HTML_TEXT);
 
@@ -298,15 +294,14 @@ public class Parser {
         lexer.setInsideTagMode(false);
     }
 
-    private void skipStyle() throws Exception
-    {
-        while (currentToken.getType() != TokenType.CLOSING_TAG) {
+    private void skipStyle() throws UnexpectedTokenException, IOException, LexerException {
+        while (currentToken.getType() != TokenType.CLOSING_TAG && currentToken.getType() != TokenType.ETX) {
             readTokenUntilCharacters('<');
             readToken();
         }
 
         if(currentToken.getType() == TokenType.ETX)
-            throw new Exception();
+            throw new UnexpectedTokenException(TokenType.ETX, currentToken.getPosition());
 
         readToken(TokenType.HTML_TEXT);
         readToken(TokenType.TAG_CLOSING_MARK);
@@ -322,7 +317,7 @@ public class Parser {
         currentToken = lexer.getHTMLTextToken(characters);
     }
 
-    private void readToken(TokenType... tokenType) throws Exception {
+    private void readToken(TokenType... tokenType) throws UnexpectedTokenException, IOException, LexerException {
         readToken();
 
         boolean throwException = true;
@@ -334,7 +329,7 @@ public class Parser {
             }
 
         if(throwException)
-            throw new Exception("");
+            throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), tokenType);
     }
 
     private void setParent(Element root)

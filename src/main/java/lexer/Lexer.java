@@ -1,6 +1,6 @@
 package lexer;
 
-import exceptions.LexerException;
+import exceptions.lexer.LexerException;
 import reader.*;
 
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class Lexer {
             nextToken = buildIdentifierOrKeywordToken(startPosition);
 
         if (nextToken == null)
-            throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn());
+            throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn(), startPosition);
         else
             currentToken = nextToken;
 
@@ -70,7 +70,7 @@ public class Lexer {
         }
 
         if (reader.getCurrentCharacter() == 3)
-            throw new LexerException("Cannot build string token at position: row " + tokenBeginPosition.getRow() + " column " + tokenBeginPosition.getColumn() + "with content: " + content);
+            throw new LexerException("Cannot build string token at position: row " + tokenBeginPosition.getRow() + " column " + tokenBeginPosition.getColumn() + "with content: " + content.toString(), tokenBeginPosition, content.toString());
 
         reader.readCharacter();
 
@@ -114,7 +114,7 @@ public class Lexer {
 
         StringBuilder content = new StringBuilder();
 
-        while (Character.isAlphabetic(reader.getCurrentCharacter())
+        while (Character.isLetterOrDigit(reader.getCurrentCharacter())
                 || reader.getCurrentCharacter() == '_'
                 || reader.getCurrentCharacter() == '$'
                 || reader.getCurrentCharacter() == '!'
@@ -149,6 +149,11 @@ public class Lexer {
                 reader.readCharacter();
                 character = reader.getCurrentCharacter();
             }
+        }
+        else
+        {
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
         }
 
         return new Number(value, position);

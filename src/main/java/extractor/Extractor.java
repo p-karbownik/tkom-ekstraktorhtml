@@ -1,5 +1,6 @@
 package extractor;
 
+import exceptions.extractor.ClassDefinitionException;
 import factory.ObjectFactory;
 import parser.structures.AmountSentence;
 import parser.structures.QuantitativeConstraintSentence;
@@ -56,8 +57,10 @@ public class Extractor {
             {
                 AmountSentence amountSentence = (AmountSentence) classParametersExtractorVisitor.getQuantitativeConstraintSentence();
 
-                if(amountSentence.getAmount() == 0 && !amountSentence.isAmountEqualEvery())
+                if(amountSentence.getAmount() == 0 && !amountSentence.isAmountEqualEvery()) {
+                    extractedObjects = new ArrayList<>();
                     return;
+                }
             }
 
             TagExtractorVisitor tagExtractorVisitor = new TagExtractorVisitor();
@@ -74,11 +77,14 @@ public class Extractor {
                     extractedObjects.add(obj);
             }
 
+            if(extractedObjects.isEmpty())
+                return;
+
             if(classParametersExtractorVisitor.getQuantitativeConstraintSentence() instanceof RangeSentence)
             {
                 RangeSentence rangeSentence = (RangeSentence) classParametersExtractorVisitor.getQuantitativeConstraintSentence();
 
-                this.extractedObjects = new ArrayList<>(extractedObjects.subList(rangeSentence.getFrom(), rangeSentence.getTo()));
+                this.extractedObjects = new ArrayList<>(extractedObjects.subList(rangeSentence.getFrom(), rangeSentence.getTo() + 1));
             }
             else
             {
@@ -87,11 +93,15 @@ public class Extractor {
                 if(amountSentence.isAmountEqualEvery())
                     this.extractedObjects = extractedObjects;
                 else
-                    this.extractedObjects = new ArrayList<>(extractedObjects.subList(0, amountSentence.getAmount() - 1));
+                    this.extractedObjects = new ArrayList<>(extractedObjects.subList(0, amountSentence.getAmount()));
             }
 
         }
-        else
-            extractionResult = false;
+        else {
+            ClassParametersExtractorVisitor classParametersExtractorVisitor = new ClassParametersExtractorVisitor();
+            classParametersExtractorVisitor.extract(resources.get(resourceName));
+
+            throw new ClassDefinitionException(classParametersExtractorVisitor.getClassFullName());
+        }
     }
 }

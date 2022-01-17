@@ -1,0 +1,73 @@
+resource resA
+{
+	tag = a;
+		
+	export to class = "example.AClass";
+	
+	set fields
+	{
+		field href = from(self).attribute[href];
+	}
+	
+	amount = 0;
+}
+
+resource liRes0
+{
+	tag = li;
+	
+	export to class = "example.LiOnetClass";
+	
+	set fields
+	{
+		field style = from(self).attribute[style];
+		field aClass = from(tag[a]).resource[resA];
+	}
+	
+	amount = every;
+}
+
+resource liRes1
+{
+	tag = li;
+	
+	export to class = "example.LiOnetClass";
+	
+	set fields
+	{
+		field style = from(self).attribute[style];
+		field aClass = from(tag[a]).resource[resA];
+	}
+	
+	amount = 4;
+}
+
+resource liRes2
+{
+	tag = li;
+	
+	export to class = "example.LiOnetClass";
+	
+	set fields
+	{
+		field style = from(self).attribute[style];
+		field aClass = from(tag[a]).resource[resA];
+	}
+	
+	range = (2, 6);
+}
+
+resource liRes3
+{
+	tag = li;
+	
+	export to class = "example.LiOnetClass";
+	
+	set fields
+	{
+		field style = from(self).attribute[style];
+		field aClass = from(tag[a]).resource[resA];
+	}
+	
+	range = (3, 3);
+}

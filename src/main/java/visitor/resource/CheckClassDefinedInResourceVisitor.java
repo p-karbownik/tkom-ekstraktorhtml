@@ -94,7 +94,7 @@ public class CheckClassDefinedInResourceVisitor implements Visitor {
                     }
                 }
 
-                return field.getType().isAssignableFrom((fieldDefinition.isExtractAsImage() ? java.awt.Image.class : String.class));
+                return field.getType().isAssignableFrom((fieldDefinition.isExtractAsImage() ? java.awt.image.BufferedImage.class : String.class));
 
             } catch (NoSuchFieldException e) {
                 return false;

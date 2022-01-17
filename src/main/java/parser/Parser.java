@@ -5,7 +5,7 @@ import lexer.*;
 import lexer.Number;
 import lexer.TokenType;
 import parser.structures.*;
-import exceptions.LexerException;
+import exceptions.lexer.LexerException;
 import exceptions.parser.*;
 import reader.Position;
 
@@ -32,7 +32,7 @@ public class Parser {
         while ((resource = parseResource()) != null) // dopoki sa resourcy
         {
             if (parsedResources.containsKey(resource.getName()))
-                throw new ResourceRedefinitionException(resource.getName());
+                throw new ResourceRedefinitionException(resource.getName(), currentToken.getPosition());
             else
                 parsedResources.put(resource.getName(), resource); // sprawdzic czy nie ma metody, ktora sprawdza czy dany klucz juz sie znajduje
 
@@ -112,7 +112,7 @@ public class Parser {
     }
 
     private TagSentence parseTagSentence() throws UnexpectedTokenException, IOException, LexerException {
-        if (!isTypeOf(TokenType.TAG)) // to w mozna wydzielic do metody typu isTypeOf
+        if (!isTypeOf(TokenType.TAG))
             return null;
 
         readToken(TokenType.ASSIGN_OPERATOR);
@@ -234,11 +234,17 @@ public class Parser {
             Subject subject = parseSubject();
 
             if (subject == null)
-                throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.CLASS, TokenType.ATTRIBUTE);
+                throw new UnexpectedTokenException(currentToken.getType(), currentToken.getPosition(), TokenType.ATTRIBUTE);
 
-            mustBe(TokenType.IDENTIFIER);
+            mustBe(TokenType.IDENTIFIER, TokenType.CLASS);
 
-            String subjectIdentifier = currentToken.getContent();
+            String subjectIdentifier;
+
+            if(isTypeOf(TokenType.IDENTIFIER))
+                subjectIdentifier = currentToken.getContent();
+            else
+                subjectIdentifier = "class";
+
             subject.setIdentifier(subjectIdentifier);
 
             readToken();
@@ -277,10 +283,7 @@ public class Parser {
     }
 
     private Subject parseSubject() throws IOException, LexerException {
-        if (isTypeOf(TokenType.CLASS)) {
-            readToken();
-            return new ClassSubject();
-        } else if (isTypeOf(TokenType.ATTRIBUTE)) {
+        if (isTypeOf(TokenType.ATTRIBUTE)) {
             readToken();
             return new AttributeSubject();
         } else
@@ -610,6 +613,7 @@ public class Parser {
         readToken(TokenType.RIGHT_ROUND_BRACKET);
         readToken(TokenType.SEMI_COLON);
 
+        readToken();
         if(from.getValue() > to.getValue())
             throw new RangeException(from, to);
 

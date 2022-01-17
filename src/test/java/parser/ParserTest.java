@@ -40,7 +40,7 @@ public class ParserTest {
     @Test
     @DisplayName("Test parsowania ClassLine")
     public void testParseClassLine() throws Exception {
-        Lexer lexer = getLexer("export to class = Resource;");
+        Lexer lexer = getLexer("export to class = \"Resource\";");
         Parser parser = new Parser(lexer);
 
         try {
@@ -49,6 +49,7 @@ public class ParserTest {
             assertEquals(classLine, new ClassLine("Resource"));
         } catch (Exception e)
         {
+            e.printStackTrace();
             assert false;
         }
     }
@@ -296,26 +297,13 @@ public class ParserTest {
     }
 
     @Test
-    @DisplayName("Test parsowania Subject nr 1")
-    public void testParseSubject1() throws Exception{
-        Lexer lexer = getLexer("class");
-        Parser parser = new Parser(lexer);
-
-        Subject parsedSubject = parser.parseSubjectForTest();
-        Subject expectedSubject = new ClassSubject();
-
-        assertEquals(expectedSubject, parsedSubject);
-    }
-
-    @Test
-    @DisplayName("Test parsowania Subject nr 2")
-    public void testParseSubject2() throws Exception{
+    @DisplayName("Test parsowania Subject")
+    public void testParseSubject() throws Exception{
         Lexer lexer = getLexer("attribute");
         Parser parser = new Parser(lexer);
 
         Subject parsedSubject = parser.parseSubjectForTest();
         Subject expectedSubject = new AttributeSubject();
-
         assertEquals(expectedSubject, parsedSubject);
     }
 
@@ -435,7 +423,7 @@ public class ParserTest {
     @Test
     public void testParseConditionSentence() throws Exception
     {
-        Lexer lexer = getLexer("if (self has not attribute src and parent has tag a) or self has class rtg in { \"cosik1\", \"cosik2\" };");
+        Lexer lexer = getLexer("if (self has not attribute src and parent has tag a) or self has attribute class in { \"cosik1\", \"cosik2\" };");
         Parser parser = new Parser(lexer);
         ConditionSentence parsedConditionSentence = parser.parseConditionSentenceForTest();
 
@@ -460,8 +448,8 @@ public class ParserTest {
 
         ValueSet valueSetOfFactor3 = new ValueSet(valuesOfFactor3);
         ComparisonObject comparisonObject = new ComparisonObject(valueSetOfFactor3);
-        ClassSubject classSubjectFactor3 = new ClassSubject();
-        classSubjectFactor3.setIdentifier("rtg");
+        AttributeSubject classSubjectFactor3 = new AttributeSubject();
+        classSubjectFactor3.setIdentifier("class");
 
         Factor factor3 = new Factor(new Path(TokenType.SELF), new FactorObject(false, classSubjectFactor3, comparisonObject));
 
@@ -498,7 +486,7 @@ public class ParserTest {
         String resourceCode = "resource res\n" +
                 "{\n" +
                 "tag = a;\n" +
-                "export to class = Resource;\n" +
+                "export to class = \"Resource\";\n" +
                 "set fields\n" +
                 "{\n" +
                 "field img = from(tag[img][1].tag[div][1]).attribute[src].asImg;\n" +
@@ -513,9 +501,9 @@ public class ParserTest {
                 "tag = img;\n" +
                 "conditions\n" +
                 "{\n" +
-                "if parent.parent has class media-content;\n" +
+                "if parent.parent has attribute class == \"media-content\";\n" +
                 "}\n" +
-                "export to class = Link;\n" +
+                "export to class = \"Link\";\n" +
                 "set fields\n" +
                 "{\n" +
                 "field link_to_image = from(self).attribute[src];\n" +
@@ -588,8 +576,8 @@ public class ParserTest {
         FieldDefinition descriptionFieldDefinition = new FieldDefinition("description", descriptionPathRoResource, "res",true);
 
         fieldDefinitions = new ArrayList<>();
-        fieldDefinitions.add(linkToImageFieldDefinition);
         fieldDefinitions.add(descriptionFieldDefinition);
+        fieldDefinitions.add(linkToImageFieldDefinition);
 
         FieldDefinitionBlock ressFieldDefinitionBlock = new FieldDefinitionBlock(fieldDefinitions);
 
@@ -597,9 +585,11 @@ public class ParserTest {
         pathElements.add(new ParentPathElement());
         pathElements.add(new ParentPathElement());
 
-        ClassSubject classSubject = new ClassSubject();
-        classSubject.setIdentifier("media-content");
-        FactorObject factorObject = new FactorObject(false, classSubject);
+        AttributeSubject classSubject = new AttributeSubject();
+        classSubject.setIdentifier("class");
+
+        ComparisonObject comparisonObject = new ComparisonObject(new ComparisonOperator(TokenType.EQUAL), "media-content");
+        FactorObject factorObject = new FactorObject(false, classSubject, comparisonObject);
 
         Factor factor = new Factor(new Path(pathElements), factorObject);
         ArrayList<Factor> factors = new ArrayList<>();

@@ -140,7 +140,6 @@ public class TagExtractorVisitor implements Visitor {
 
                 //sprawdzenie czy nazwa tagu sie pokrywa
 
-                //przesuniecie
                 if(currentTag.getName().compareTo(classParametersExtractorVisitor.getTagName()) != 0)
                     return false;
 
@@ -169,12 +168,9 @@ public class TagExtractorVisitor implements Visitor {
                             return false;
                     }
                 }
-
-                //jak tam sie nie wywalilo to znaczy, ze jest ok
             }
         }
 
-        // sprawdzenie czy tag spelnia wymagania
         return true;
     }
 

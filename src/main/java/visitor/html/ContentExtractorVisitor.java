@@ -4,7 +4,9 @@ import factory.ObjectFactory;
 import parser.structures.*;
 import parserhtml.structures.*;
 
-import java.net.MalformedURLException;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 
@@ -50,14 +52,15 @@ public class ContentExtractorVisitor implements Visitor {
     }
 
     @Override
-    public Object visit(Attribute attribute) throws MalformedURLException {
+    public Object visit(Attribute attribute) throws IOException {
         if(attribute.getName().compareTo(fieldDefinition.getAttributeOrResourceIdentifier()) != 0)
             return null;
 
         if(fieldDefinition.isExtractAsImage())
         {
             URL url = new URL(attribute.getValue());
-            return java.awt.Toolkit.getDefaultToolkit().createImage(url);
+            BufferedImage image = ImageIO.read(url);
+            return image;
         }
         else
             return attribute.getValue();

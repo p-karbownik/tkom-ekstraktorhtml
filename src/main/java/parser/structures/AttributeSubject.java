@@ -1,5 +1,7 @@
 package parser.structures;
 
+import java.util.Objects;
+
 public class AttributeSubject extends Subject{
 
     public AttributeSubject()
@@ -13,6 +15,6 @@ public class AttributeSubject extends Subject{
         if(o == null)
             return false;
 
-        return (o instanceof AttributeSubject) && (identifier.compareTo(((AttributeSubject) o ).identifier) == 0);
+        return (o instanceof AttributeSubject) && Objects.equals(identifier, ((AttributeSubject) o).identifier);
     }
 }
