@@ -8,6 +8,7 @@ public class FieldRedefinitionException extends Exception{
 
     public FieldRedefinitionException(String fieldDefinitionIdentifier, Position position)
     {
+        super("Redefinition of field " + fieldDefinitionIdentifier + " at position: row: " + position.getRow() +", column" + position.getColumn());
         this.fieldDefinitionIdentifier = fieldDefinitionIdentifier;
         this.position = position;
     }

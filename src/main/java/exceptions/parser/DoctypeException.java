@@ -7,6 +7,7 @@ public class DoctypeException extends Exception{
 
     public DoctypeException(Position position)
     {
+        super("Exception during doctype parsing at position: row: " + position.getRow() +", column" + position.getColumn());
         this.position = position;
     }
 

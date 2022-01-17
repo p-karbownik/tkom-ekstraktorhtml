@@ -7,6 +7,7 @@ public class ResourceRedefinitionException extends Exception{
     private Position position;
     public ResourceRedefinitionException(String resourceIdentifier, Position position)
     {
+        super("Redefinition of the resource " + resourceIdentifier +" at position: row: " + position.getRow() +", column" + position.getColumn());
         this.resourceIdentifier = resourceIdentifier;
         this.position = position;
     }

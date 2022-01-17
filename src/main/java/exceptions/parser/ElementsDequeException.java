@@ -5,6 +5,7 @@ public class ElementsDequeException extends Exception{
 
     public ElementsDequeException(int dequeueSize)
     {
+        super("The elements deque is too large");
         this.dequeueSize = dequeueSize;
     }
 

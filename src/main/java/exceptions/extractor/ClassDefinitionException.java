@@ -5,6 +5,7 @@ public class ClassDefinitionException extends Exception{
 
     public ClassDefinitionException(String className)
     {
+        super("The definition of class " + className + " is incorrect");
         this.className = className;
     }
 

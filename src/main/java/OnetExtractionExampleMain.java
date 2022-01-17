@@ -73,5 +73,34 @@ public class OnetExtractionExampleMain {
             System.out.println(o.toString());
         }
 
+        System.out.println("\nWydobycie resource headRes");
+
+        extractor.extract("headRes");
+
+        objects = extractor.getExtractedObjects();
+
+        for (Object o : objects) {
+            System.out.println(o.toString());
+        }
+
+        System.out.println("\nWydobycie resource divRes");
+
+        extractor.extract("divRes");
+
+        objects = extractor.getExtractedObjects();
+
+        for (Object o : objects) {
+            System.out.println(o.toString());
+        }
+
+        System.out.println("\nWydobycie resource divRes1");
+
+        extractor.extract("divRes1");
+
+        objects = extractor.getExtractedObjects();
+
+        for (Object o : objects) {
+            System.out.println(o.toString());
+        }
     }
 }

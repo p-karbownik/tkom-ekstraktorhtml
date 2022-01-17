@@ -103,7 +103,7 @@ resource liTextRes
 	conditions
 	{
 		if parent has tag ul;
-		if child has not tag a;
+		if parent.parent has attribute class == "info";
 	}
 
 	export to class = "example.LiClass";

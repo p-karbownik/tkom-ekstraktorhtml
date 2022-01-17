@@ -3,6 +3,8 @@ package exceptions.parser;
 import lexer.TokenType;
 import reader.Position;
 
+import java.util.Arrays;
+
 public class UnexpectedTokenException extends Exception{
 
     private TokenType foundedToken;
@@ -11,6 +13,7 @@ public class UnexpectedTokenException extends Exception{
 
     public UnexpectedTokenException(TokenType foundedToken, Position position, TokenType... expectedTokenTypes)
     {
+        super("Unexpected token " + foundedToken.toString() + " at position: row: " + position.getRow() + ", column " + position.getColumn() + "expected: " + Arrays.toString(expectedTokenTypes));
         this.foundedToken = foundedToken;
         this.position = position;
         this.expectedTokens = expectedTokenTypes;

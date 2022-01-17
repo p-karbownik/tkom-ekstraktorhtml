@@ -1,6 +1,7 @@
 package extractor;
 
 import exceptions.extractor.ClassDefinitionException;
+import exceptions.extractor.UnknownResourceException;
 import factory.ObjectFactory;
 import parser.structures.AmountSentence;
 import parser.structures.QuantitativeConstraintSentence;
@@ -23,41 +24,38 @@ public class Extractor {
     private ArrayList<Object> extractedObjects;
     private boolean extractionResult;
 
-    public Extractor(HashMap<String, Resource> resources, Root htmlDocumentRoot)
-    {
+    public Extractor(HashMap<String, Resource> resources, Root htmlDocumentRoot) {
         this.resources = resources;
         this.htmlDocumentRoot = htmlDocumentRoot;
         extractionResult = false;
     }
 
-    public void setResources(HashMap<String, Resource> resources)
-    {
+    public void setResources(HashMap<String, Resource> resources) {
         this.resources = resources;
     }
 
-    public void setHtmlDocumentRoot(Root htmlDocumentRoot)
-    {
+    public void setHtmlDocumentRoot(Root htmlDocumentRoot) {
         this.htmlDocumentRoot = htmlDocumentRoot;
     }
 
-    public ArrayList<Object> getExtractedObjects()
-    {
+    public ArrayList<Object> getExtractedObjects() {
         return extractedObjects;
     }
 
     public void extract(String resourceName) throws Exception {
+        if (!resources.containsKey(resourceName))
+            throw new UnknownResourceException(resourceName);
+
         CheckClassDefinedInResourceVisitor checkClassDefinedInResourceVisitor = new CheckClassDefinedInResourceVisitor();
 
-        if(checkClassDefinedInResourceVisitor.isClassDefinitionCorrect(resources.get(resourceName), resources))
-        {
+        if (checkClassDefinedInResourceVisitor.isClassDefinitionCorrect(resources.get(resourceName), resources)) {
             ClassParametersExtractorVisitor classParametersExtractorVisitor = new ClassParametersExtractorVisitor();
             classParametersExtractorVisitor.extract(resources.get(resourceName));
 
-            if(classParametersExtractorVisitor.getQuantitativeConstraintSentence() instanceof AmountSentence)
-            {
+            if (classParametersExtractorVisitor.getQuantitativeConstraintSentence() instanceof AmountSentence) {
                 AmountSentence amountSentence = (AmountSentence) classParametersExtractorVisitor.getQuantitativeConstraintSentence();
 
-                if(amountSentence.getAmount() == 0 && !amountSentence.isAmountEqualEvery()) {
+                if (amountSentence.getAmount() == 0 && !amountSentence.isAmountEqualEvery()) {
                     extractedObjects = new ArrayList<>();
                     return;
                 }
@@ -69,35 +67,32 @@ public class Extractor {
             ArrayList<Element> elements = tagExtractorVisitor.getExtractedElements();
             ArrayList<Object> extractedObjects = new ArrayList<>();
 
-            for(Element element : elements)
-            {
+            for (Element element : elements) {
                 Object obj = ObjectFactory.createObject(resources.get(resourceName), element, resources);
 
-                if(obj != null)
+                if (obj != null)
                     extractedObjects.add(obj);
             }
 
-            if(extractedObjects.isEmpty())
+            if (extractedObjects.isEmpty())
                 return;
 
-            if(classParametersExtractorVisitor.getQuantitativeConstraintSentence() instanceof RangeSentence)
-            {
+            if (classParametersExtractorVisitor.getQuantitativeConstraintSentence() instanceof RangeSentence) {
                 RangeSentence rangeSentence = (RangeSentence) classParametersExtractorVisitor.getQuantitativeConstraintSentence();
-
-                this.extractedObjects = new ArrayList<>(extractedObjects.subList(rangeSentence.getFrom(), rangeSentence.getTo() + 1));
-            }
-            else
-            {
+                if (rangeSentence.getFrom() > extractedObjects.size() - 1)
+                    this.extractedObjects = new ArrayList<>();
+                else
+                    this.extractedObjects = new ArrayList<>(extractedObjects.subList(rangeSentence.getFrom(), Math.min(extractedObjects.size(), rangeSentence.getTo() + 1)));
+            } else {
                 AmountSentence amountSentence = (AmountSentence) classParametersExtractorVisitor.getQuantitativeConstraintSentence();
 
-                if(amountSentence.isAmountEqualEvery())
+                if (amountSentence.isAmountEqualEvery())
                     this.extractedObjects = extractedObjects;
                 else
-                    this.extractedObjects = new ArrayList<>(extractedObjects.subList(0, amountSentence.getAmount()));
+                    this.extractedObjects = new ArrayList<>(extractedObjects.subList(0, (Math.min(extractedObjects.size(), amountSentence.getAmount()))));
             }
 
-        }
-        else {
+        } else {
             ClassParametersExtractorVisitor classParametersExtractorVisitor = new ClassParametersExtractorVisitor();
             classParametersExtractorVisitor.extract(resources.get(resourceName));
 

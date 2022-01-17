@@ -91,7 +91,7 @@ public class HtmlLexer {
             character = reader.getCurrentCharacter();
         }
 
-        return new Token(TokenType.HTML_TEXT, StringEscapeUtils.escapeHtml4(content.toString()), position);
+        return new Token(TokenType.HTML_TEXT, StringEscapeUtils.unescapeHtml4(content.toString()), position);
     }
     private Token buildKeyWordToken() throws IOException {
         char character = reader.getCurrentCharacter();

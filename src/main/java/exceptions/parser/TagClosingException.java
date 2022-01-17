@@ -9,6 +9,7 @@ public class TagClosingException extends Exception{
 
     public TagClosingException(String expectedTagName, String actualTagName, Position position)
     {
+        super("Expected tag name: " + expectedTagName + ", actual tag name: " + actualTagName + " founded at position: row: " + position.getRow() + ", column" + position.getColumn());
         this.expectedTagName = expectedTagName;
         this.actualTagName = actualTagName;
         this.position = position;

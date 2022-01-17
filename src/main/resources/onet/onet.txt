@@ -71,3 +71,64 @@ resource liRes3
 	
 	range = (3, 3);
 }
+
+resource headRes
+{
+    tag = head;
+
+    conditions
+    {
+        if parent has tag html and (child has tag link or child has tag body);
+    }
+    export to class = "example.HeadClass";
+
+    set fields
+    {
+        field meta0 = from(tag[meta]).attribute[content];
+        field meta1 = from(tag[meta][1]).attribute[content];
+        field meta2 = from(tag[meta][2]).attribute[content];
+    }
+
+    amount = every;
+}
+
+resource divRes
+{
+    tag = div;
+
+    conditions
+    {
+        if descendant has attribute class == "backToMainPageButton";
+        if child has attribute class == "Phx__content";
+    }
+
+    export to class = "example.DivRes";
+
+    set fields
+    {
+        field divClass0 = from(tag[div].tag[div]).attribute[class];
+        field divClass1 = from(tag[div][1].tag[div]).attribute[class];
+        field divClass2 = from(tag[div][1].tag[div][1]).attribute[class];
+    }
+
+    amount = every;
+}
+
+resource divRes1
+{
+    tag = div;
+
+    conditions
+    {
+        if child.child has attribute id == "mainPageBody0";
+    }
+
+    export to class = "example.DivRes";
+
+    set fields
+    {
+        field divClass0 = from(self).attribute[class];
+    }
+
+    amount = every;
+}

@@ -468,9 +468,9 @@ public class Parser {
 
             if (isTypeOf(TokenType.ATTRIBUTE)) {
                 readToken(TokenType.LEFT_SQUARE_BRACKET);
-                readToken(TokenType.IDENTIFIER);
+                readToken(TokenType.IDENTIFIER, TokenType.CLASS);
 
-                String attributeIdentifier = currentToken.getContent();
+                String attributeIdentifier = (isTypeOf(TokenType.IDENTIFIER)) ? currentToken.getContent() : "class";
 
                 readToken(TokenType.RIGHT_SQUARE_BRACKET);
 
@@ -492,7 +492,7 @@ public class Parser {
                 String resourceIdentifier = currentToken.getContent();
 
                 if (!parsedResources.containsKey(resourceIdentifier))
-                    throw new UndefinedResourceException(resourceIdentifier);
+                    throw new UndefinedResourceException(resourceIdentifier, currentToken.getPosition());
 
                 readToken(TokenType.RIGHT_SQUARE_BRACKET);
                 readToken(TokenType.SEMI_COLON);

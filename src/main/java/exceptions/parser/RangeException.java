@@ -7,6 +7,7 @@ public class RangeException extends Exception{
 
     public RangeException(Number from, Number to)
     {
+        super("Range values are incorrect");
         this.from = from;
         this.to = to;
     }
