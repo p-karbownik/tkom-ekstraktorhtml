@@ -35,7 +35,7 @@ public class ContentExtractorVisitor implements Visitor {
         //przesuniecie sie do wymaganego node
         moveToTag();
 
-        if(fieldDefinition.getAttributeOrResourceIdentifier() == null) // to jest glupota
+        if(fieldDefinition.getAttributeOrResourceIdentifier() == null)
             return extractText();
 
         if(fieldDefinition.isResource())
