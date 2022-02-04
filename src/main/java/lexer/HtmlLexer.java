@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import exceptions.LexerException;
+import exceptions.lexer.LexerException;
+import org.apache.commons.text.StringEscapeUtils;
 import reader.*;
 
 public class HtmlLexer {
@@ -46,7 +47,7 @@ public class HtmlLexer {
                 nextToken = buildHTMLtextToken();
         }
         if(nextToken == null)
-            throw new LexerException("Cannot build token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString());
+            throw new LexerException("Cannot build token at position: row " + position.getRow() + " column " + position.getColumn() + "with content: " + content.toString(), position, content.toString());
         return nextToken;
     }
 
@@ -70,7 +71,7 @@ public class HtmlLexer {
     private Token buildHTMLtextTokenInsideTokenMode() throws IOException {
         char character = reader.getCurrentCharacter();
 
-        while(character != 3 && !isWhiteSpace(character) && !isKeyWordCharacter(character)) //przemyslec podejscie do namespacow
+        while(character != 3 && !isWhiteSpace(character) && !isKeyWordCharacter(character))
         {
             content.append(character);
             reader.readCharacter();
@@ -83,14 +84,14 @@ public class HtmlLexer {
     private Token buildHTMLtextToken() throws IOException {
         char character = reader.getCurrentCharacter();
 
-        while(character != 3 && !isKeyWordCharacter(character)) //przemyslec podejscie do namespacow
+        while(character != 3 && !isKeyWordCharacter(character))
         {
             content.append(character);
             reader.readCharacter();
             character = reader.getCurrentCharacter();
         }
 
-        return new Token(TokenType.HTML_TEXT, content.toString(), position);
+        return new Token(TokenType.HTML_TEXT, StringEscapeUtils.unescapeHtml4(content.toString()), position);
     }
     private Token buildKeyWordToken() throws IOException {
         char character = reader.getCurrentCharacter();
@@ -176,7 +177,6 @@ public class HtmlLexer {
         }
         else if(insideTagMode && character == '\'')
         {
-
             return new Token(TokenType.SINGLE_QUOTE, content.toString(), position);
         }
         else if(insideTagMode && character == '=')

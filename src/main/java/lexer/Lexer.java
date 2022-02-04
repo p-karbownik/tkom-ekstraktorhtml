@@ -1,6 +1,6 @@
 package lexer;
 
-import exceptions.LexerException;
+import exceptions.lexer.LexerException;
 import reader.*;
 
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class Lexer {
             nextToken = buildIdentifierOrKeywordToken(startPosition);
 
         if (nextToken == null)
-            throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn());
+            throw new LexerException("Cannot build token at position: row " + startPosition.getRow() + " column " + startPosition.getColumn(), startPosition);
         else
             currentToken = nextToken;
 
@@ -70,7 +70,7 @@ public class Lexer {
         }
 
         if (reader.getCurrentCharacter() == 3)
-            throw new LexerException("Cannot build string token at position: row " + tokenBeginPosition.getRow() + " column " + tokenBeginPosition.getColumn() + "with content: " + content);
+            throw new LexerException("Cannot build string token at position: row " + tokenBeginPosition.getRow() + " column " + tokenBeginPosition.getColumn() + "with content: " + content.toString(), tokenBeginPosition, content.toString());
 
         reader.readCharacter();
 
@@ -109,16 +109,17 @@ public class Lexer {
 
     private Token buildIdentifierOrKeywordToken(Position tokenBeginPosition) throws IOException {
 
-        if (!(Character.isLetter(reader.getCurrentCharacter()) || reader.getCurrentCharacter() == '_'))
+        if (!(Character.isLetter(reader.getCurrentCharacter()) || reader.getCurrentCharacter() == '_' || reader.getCurrentCharacter() == '$'))
             return null;
 
         StringBuilder content = new StringBuilder();
 
-        while (Character.isAlphabetic(reader.getCurrentCharacter())
+        while (Character.isLetterOrDigit(reader.getCurrentCharacter())
                 || reader.getCurrentCharacter() == '_'
                 || reader.getCurrentCharacter() == '$'
                 || reader.getCurrentCharacter() == '!'
-                || reader.getCurrentCharacter() == '-'){
+                || reader.getCurrentCharacter() == '-'
+                || reader.getCurrentCharacter() == '&'){
             content.append(reader.getCurrentCharacter());
             reader.readCharacter();
         }
@@ -148,6 +149,11 @@ public class Lexer {
                 reader.readCharacter();
                 character = reader.getCurrentCharacter();
             }
+        }
+        else
+        {
+            reader.readCharacter();
+            character = reader.getCurrentCharacter();
         }
 
         return new Number(value, position);
@@ -183,6 +189,7 @@ public class Lexer {
 
         keyWords.put("not", TokenType.NOT);
         keyWords.put("field", TokenType.FIELD);
+        keyWords.put("in", TokenType.IN);
     }
 
     private void initialiseOperators() {

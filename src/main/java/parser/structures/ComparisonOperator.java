@@ -15,6 +15,11 @@ public class ComparisonOperator {
             type = Type.notEqual;
     }
 
+    public boolean isEqualType()
+    {
+        return type == Type.equal;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

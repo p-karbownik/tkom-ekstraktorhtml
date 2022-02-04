@@ -237,7 +237,7 @@ public class ParserTest {
         Root expectedRoot = new Root();
 
         Text textInTitle = new Text("Title of the document");
-        Text textInBody = new Text("The content of the document......");
+        Text textInBody = new Text("The content of the document......\n");
 
 
         Tag doctypeTag = new Tag("doctype");

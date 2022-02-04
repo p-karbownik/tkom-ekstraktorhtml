@@ -1,9 +1,0 @@
-Uruchomienie testów oraz kodu klasy Main wymaga użycia maven .
-
-Aby uruchomić testy:
-    mvn test
-
-Aby uruchomić kod klasy Main, która po kolei wczytuje tokeny z zdanego pliku (ścieżkę do niego należy podać jako path_to_file) i wyświetla ich parametry:
-
-    mvn exec:java -Dexec.mainClass="Main" -Dexec.args="path_to_file"
-

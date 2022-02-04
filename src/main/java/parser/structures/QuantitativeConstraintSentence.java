@@ -1,4 +1,6 @@
 package parser.structures;
 
-public interface QuantitativeConstraintSentence {
+import visitor.resource.Visitable;
+
+public abstract class QuantitativeConstraintSentence implements Visitable {
 }

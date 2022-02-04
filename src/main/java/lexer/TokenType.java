@@ -42,6 +42,7 @@ public enum TokenType {
     IDENTIFIER,
     SELF,
     RANGE,
+    IN,
 
     //tokens for HTML
     CLOSING_TAG,

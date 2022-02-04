@@ -1,8 +1,11 @@
 package parser.structures;
 
+import visitor.resource.Visitable;
+import visitor.resource.Visitor;
+
 import java.util.Objects;
 
-public class DefinitionBlock {
+public class DefinitionBlock implements Visitable {
     private TagSentence tagSentence;
     private ConditionsBlock conditionsBlock;
     private ClassLine classLine;
@@ -18,6 +21,29 @@ public class DefinitionBlock {
         this.quantitativeConstraintSentence = quantitativeConstraintSentence;
     }
 
+    public TagSentence getTagSentence()
+    {
+        return tagSentence;
+    }
+
+    public ClassLine getClassLine() {
+        return classLine;
+    }
+
+    public FieldDefinitionBlock getFieldsDefinitionBlock()
+    {
+        return fieldsDefinitionBlock;
+    }
+
+    public QuantitativeConstraintSentence getQuantitativeConstraintSentence()
+    {
+        return quantitativeConstraintSentence;
+    }
+
+    public ConditionsBlock getConditionsBlock() {
+        return conditionsBlock;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -26,4 +52,8 @@ public class DefinitionBlock {
         return Objects.equals(tagSentence, that.tagSentence) && Objects.equals(conditionsBlock, that.conditionsBlock) && Objects.equals(classLine, that.classLine) && Objects.equals(fieldsDefinitionBlock, that.fieldsDefinitionBlock) && Objects.equals(quantitativeConstraintSentence, that.quantitativeConstraintSentence);
     }
 
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
+    }
 }

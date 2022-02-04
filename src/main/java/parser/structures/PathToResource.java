@@ -6,10 +6,20 @@ import java.util.Objects;
 public class PathToResource
 {
 
-    private class PathNode
+    public static class PathNode
     {
-        PathElement pathElement;
-        PathNode next;
+        private PathElement pathElement;
+        private PathNode next;
+
+        public PathElement getPathElement()
+        {
+            return pathElement;
+        }
+
+        public PathNode getNext()
+        {
+            return next;
+        }
 
         @Override
         public boolean equals(Object o) {
@@ -28,6 +38,11 @@ public class PathToResource
         pathRoot = createPath(elements);
     }
 
+    public PathNode getPathRoot()
+    {
+        return pathRoot;
+    }
+
     private PathNode createPath(ArrayList<PathElement> elements)
     {
         pathRoot = new PathNode();
@@ -37,7 +52,9 @@ public class PathToResource
         for(PathElement e : elements)
         {
             current.pathElement = e;
-            current.next = previous;
+
+            if(previous != null)
+                previous.next = current;
 
             previous = current;
             current = new PathNode();

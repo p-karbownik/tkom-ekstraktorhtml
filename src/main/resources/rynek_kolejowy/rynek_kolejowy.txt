@@ -1,0 +1,117 @@
+resource imageRes
+{
+	tag = meta;
+	
+	conditions
+	{
+		if ancestor has tag head;
+		if self has attribute property == "og:image";
+	}
+	
+	export to class = "example.ImageMeta";
+	
+	set fields
+	{
+		field image = from(self).attribute[content].asImg;
+		field src = from(self).attribute[content];
+	}
+	
+	amount = 1;
+}
+
+resource metaTextRes
+{
+	tag = meta;
+		
+	export to class = "example.MetaText";
+	
+	set fields
+	{
+		field name = from(self).attribute[name];
+		field content = from(self).attribute[content];
+	}
+	amount = every;
+}
+
+resource metaTextRes1
+{
+	tag = meta;
+		
+	conditions
+	{
+		if self has attribute name == "description";
+	}
+	
+	export to class = "example.MetaText";
+	
+	set fields
+	{
+		field name = from(self).attribute[name];
+		field content = from(self).attribute[content];
+	}
+	
+	amount = every;
+
+}
+
+resource metaTextRes2
+{
+	tag = meta;
+		
+	conditions
+	{
+		if self has attribute name != "description";
+	}
+	
+	export to class = "example.MetaText";
+	
+	set fields
+	{
+		field name = from(self).attribute[name];
+		field content = from(self).attribute[content];
+	}
+	
+	amount = every;
+
+}
+
+resource metaTextRes3
+{
+	tag = meta;
+		
+	conditions
+	{
+		if self has attribute name in {"description", "title"};
+	}
+	
+	export to class = "example.MetaText";
+	
+	set fields
+	{
+		field name = from(self).attribute[name];
+		field content = from(self).attribute[content];
+	}
+	
+	amount = every;
+
+}
+
+resource liTextRes
+{
+	tag = li;
+
+	conditions
+	{
+		if parent has tag ul;
+		if parent.parent has attribute class == "info";
+	}
+
+	export to class = "example.LiClass";
+
+	set fields
+	{
+		field text = from(self);
+	}
+
+	amount = every;
+}

@@ -1,27 +1,42 @@
 package parser.structures;
 
+import visitor.conditionsentence.Visitable;
+import visitor.conditionsentence.Visitor;
+
 import java.util.Objects;
 
-public class FactorObject {
+public class FactorObject implements Visitable {
     private boolean isNegated;
     private Subject subject;
-    private ComparisonOperator comparisonOperator;
-    private ValueSet valueSet;
+    private ComparisonObject comparisonObject;
 
     public FactorObject(boolean isNegated, Subject subject)
     {
         this.isNegated = isNegated;
         this.subject = subject;
-        comparisonOperator = null;
-        valueSet = null;
+        comparisonObject = null;
     }
 
-    public FactorObject(boolean isNegated, Subject subject, ComparisonOperator comparisonOperator, ValueSet valueSet)
+    public FactorObject(boolean isNegated, Subject subject, ComparisonObject comparisonObject)
     {
         this.isNegated = isNegated;
         this.subject = subject;
-        this.comparisonOperator = comparisonOperator;
-        this.valueSet = valueSet;
+        this.comparisonObject = comparisonObject;
+    }
+
+    public Subject getSubject()
+    {
+        return subject;
+    }
+
+    public boolean isNegated()
+    {
+        return isNegated;
+    }
+
+    public ComparisonObject getComparisonObject()
+    {
+        return comparisonObject;
     }
 
     @Override
@@ -29,6 +44,11 @@ public class FactorObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FactorObject that = (FactorObject) o;
-        return isNegated == that.isNegated && Objects.equals(subject, that.subject) && Objects.equals(comparisonOperator, that.comparisonOperator) && Objects.equals(valueSet, that.valueSet);
+        return isNegated == that.isNegated && Objects.equals(subject, that.subject) && Objects.equals(comparisonObject, that.comparisonObject);
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }
